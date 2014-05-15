@@ -177,7 +177,7 @@ function Node(x, y) {
   this.y = y;
   this.mouseOffsetX = 0;
   this.mouseOffsetY = 0;
-  this.isAcceptState = false;
+  this.isSourceNode = false;
   this.text = '';
 }
 
@@ -201,7 +201,7 @@ Node.prototype.draw = function(c) {
   drawText(c, this.text, this.x, this.y, null, selectedObject == this);
 
   // draw a double circle for an accept state
-  if (this.isAcceptState) {
+  if (this.isSourceNode) {
     c.beginPath();
     c.arc(this.x, this.y, nodeRadius - 6, 0, 2 * Math.PI, false);
     c.stroke();
@@ -781,7 +781,7 @@ window.onload = function() {
       resetCaret();
       draw();
     } else if (selectedObject instanceof Node) {
-      selectedObject.isAcceptState = !selectedObject.isAcceptState;
+      selectedObject.isSourceNode = !selectedObject.isSourceNode;
       draw();
     }
   };
@@ -1001,7 +1001,7 @@ function restoreBackup() {
     for (var i = 0; i < backup.nodes.length; i++) {
       var backupNode = backup.nodes[i];
       var node = new Node(backupNode.x, backupNode.y);
-      node.isAcceptState = backupNode.isAcceptState;
+      node.isSourceNode = backupNode.isSourceNode;
       node.text = backupNode.text;
       nodes.push(node);
     }
@@ -1048,7 +1048,7 @@ function saveBackup() {
       'x': node.x,
       'y': node.y,
       'text': node.text,
-      'isAcceptState': node.isAcceptState
+      'isSourceNode': node.isSourceNode
     };
     backup.nodes.push(backupNode);
   }

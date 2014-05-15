@@ -1,0 +1,33 @@
+
+<!doctype html>
+<html><head>
+	<title>Dijkstra's Algorithm Solver</title>
+	<link rel="stylesheet" href="css/style.css">
+</head><body>
+	<h1>Dijkstra's Algorithm Solver</h1>
+	<canvas id="canvas" width="800" height="600">
+		<span class="error">Your browser does not support<br>the HTML5 &lt;canvas&gt; element</span>
+	</canvas>
+	<div>
+		<button id="computeShortestPath">Find Shortest Path</button>
+		<button id="clearCanvas">Clear Canvas</button>
+		<p class="center">Export as: <a href="javascript:saveAsPNG()">PNG</a> | <a href="javascript:saveAsSVG()">SVG</a> | <a href="javascript:saveAsLaTeX()">LaTeX</a></p>
+		<textarea id="output"></textarea>
+		<p>The big white box above is the where you can draw vertices and edges. Here's how to use it:</p>
+		<ul>
+			<li><b>Add a vertex (node):</b> double-click on the canvas</li>
+			<li><b>Add an edge:</b> shift-drag on the canvas from one vertex to another</li>
+			<li><b>Move something:</b> drag it around</li>
+			<li><b>Delete something:</b> click it and press the delete key (not the backspace key)</li>
+		</ul><ul>
+			<li><b>Make source vertex:</b> double-click on an existing vertex</li>
+			<li><b>Type numeric subscript:</b> put an underscore before the number (like "S_0")</li>
+			<li><b>Type greek letter:</b> put a backslash before it (like "\beta")</li>
+		</ul>
+		<p>This was made in HTML5 and JavaScript using the canvas element.</p>
+	</div>
+	<p>Created by Gopal Adhikari. Forked from Finite State Machine Designer by <a href="http://madebyevan.com/fsm">Evan Wallace</a></p>
+	<script type="text/javascript" src="js/utils.js"></script>	
+	<script type="text/javascript" src="js/dijkstra.js"></script>
+	<script type="text/javascript" src="js/fsm.js"></script>
+</body></html>
