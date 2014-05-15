@@ -1,0 +1,132 @@
+{
+    "links": [
+        {
+            "lineAngleAdjust": 0,
+            "nodeA": 0,
+            "nodeB": 2,
+            "parallelPart": 0.6826568265682657,
+            "perpendicularPart": 67,
+            "text": "3",
+            "type": "Link"
+        },
+        {
+            "lineAngleAdjust": 0,
+            "nodeA": 0,
+            "nodeB": 1,
+            "parallelPart": 0.5,
+            "perpendicularPart": 0,
+            "text": "5",
+            "type": "Link"
+        },
+        {
+            "lineAngleAdjust": 0,
+            "nodeA": 1,
+            "nodeB": 2,
+            "parallelPart": 0.5,
+            "perpendicularPart": 0,
+            "text": "2",
+            "type": "Link"
+        },
+        {
+            "lineAngleAdjust": 0,
+            "nodeA": 3,
+            "nodeB": 4,
+            "parallelPart": 0.42016806722689076,
+            "perpendicularPart": 0,
+            "text": "-1",
+            "type": "Link"
+        },
+        {
+            "lineAngleAdjust": 0,
+            "nodeA": 4,
+            "nodeB": 5,
+            "parallelPart": 0.5,
+            "perpendicularPart": 0,
+            "text": "-2",
+            "type": "Link"
+        },
+        {
+            "lineAngleAdjust": 3.141592653589793,
+            "nodeA": 1,
+            "nodeB": 3,
+            "parallelPart": 0.6470588235294118,
+            "perpendicularPart": -86,
+            "text": "6",
+            "type": "Link"
+        },
+        {
+            "lineAngleAdjust": 0,
+            "nodeA": 2,
+            "nodeB": 3,
+            "parallelPart": 0.5,
+            "perpendicularPart": 0,
+            "text": "7",
+            "type": "Link"
+        },
+        {
+            "lineAngleAdjust": 0,
+            "nodeA": 2,
+            "nodeB": 4,
+            "parallelPart": 0.7378277153558053,
+            "perpendicularPart": 81,
+            "text": "4",
+            "type": "Link"
+        },
+        {
+            "lineAngleAdjust": 0,
+            "nodeA": 2,
+            "nodeB": 5,
+            "parallelPart": 0.5529100529100529,
+            "perpendicularPart": 164,
+            "text": "2",
+            "type": "Link"
+        },
+        {
+            "lineAngleAdjust": 3.141592653589793,
+            "nodeA": 3,
+            "nodeB": 5,
+            "parallelPart": 0.4431818181818182,
+            "perpendicularPart": -96,
+            "text": "1",
+            "type": "Link"
+        }
+    ],
+    "nodes": [
+        {
+            "isSourceNode": true,
+            "text": "r",
+            "x": 54,
+            "y": 286
+        },
+        {
+            "isSourceNode": false,
+            "text": "s",
+            "x": 206,
+            "y": 286
+        },
+        {
+            "isSourceNode": false,
+            "text": "t",
+            "x": 353,
+            "y": 286
+        },
+        {
+            "isSourceNode": false,
+            "text": "x",
+            "x": 502,
+            "y": 286
+        },
+        {
+            "isSourceNode": false,
+            "text": "y",
+            "x": 632,
+            "y": 286
+        },
+        {
+            "isSourceNode": false,
+            "text": "z",
+            "x": 766,
+            "y": 286
+        }
+    ]
+}
