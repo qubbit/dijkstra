@@ -13,19 +13,19 @@ function init() {
 
 		constructor: Graph,
 
-		sanitize: function(){
+		sanitize: function() {
 
-			if(!this.Vertices || !this.Edges){
+			if (!this.Vertices || !this.Edges) {
 				return false;
 			}
-			
-			$.each(this.Vertices, function(k, v){
+
+			$.each(this.Vertices, function(k, v) {
 				v.visited = false;
 			});
 
 			this.dist = [];
 			this.pred = [];
-			
+
 			return true;
 		},
 
@@ -136,7 +136,7 @@ function init() {
 						d: Infinity
 					});
 				}
-				
+
 				this.pred.push({
 					v: vertex,
 					p: undefined
@@ -175,7 +175,7 @@ function init() {
 
 						var di = this.getVertexIndex(this.dist, v);
 						var pi = this.getVertexIndex(this.pred, v);
-						
+
 						this.dist[di] = {
 							v: v,
 							d: alt
@@ -190,33 +190,30 @@ function init() {
 			}
 		},
 
-		drawPath: function(ctx){
-			
+		drawPath: function(ctx) {
+
 			var links = [];
 			var e = this.Edges;
 			var pred = this.pred;
 
 			ctx.canvas.height = ctx.canvas.height;
 
-			for(var i in e){
-				for(var j in pred){
-					if(e[i].nodeA == pred[j].p && e[i].nodeB == pred[j].v){
+			for (var i in e) {
+				for (var j in pred) {
+					if (e[i].nodeA == pred[j].p && e[i].nodeB == pred[j].v) {
 						links.push(e[i])
-						console.log(1);
 					}
-				}			
+				}
 			}
 
 			var color = "#33a51c";
 
-			for(var k in links){
+			for (var k in links) {
 
 				links[k].nodeA.draw(ctx, color);
 				links[k].nodeB.draw(ctx, color);
 				links[k].draw(ctx, color);
 			}
-
-			console.log(links);
 		}
 	};
 
@@ -225,32 +222,54 @@ function init() {
 		var g = new Graph();
 
 		if (g.sanitize()) {
-			
+
 			g.computeShortestPath();
 
 			var resultElem = $("#result");
 
 			resultElem.html("");
 
-			var pathElem = $("<h3>", {text: "Path: "});
+			var pathElem = $("<h3>", {
+				text: "Path: "
+			});
 
 			var k;
 
-			for (k = 0; k < g.pred.length - 2; k++){
-				pathElem.append(g.pred[k].p.text + " " + g.pred[k].v.text + " &rarr; ");
-			}
+			var pred = g.pred;
 
-			pathElem.append(g.pred[k].p.text + " " + g.pred[k].v.text);
+			if (pred.length > 1) {
+
+				for (k = 0; k < pred.length - 2; k++) {
+
+					var p = g.pred[k].p;
+					var v = g.pred[k].v;
+
+					if (p && v) {
+						pathElem.append(g.pred[k].p.text + " " + g.pred[k].v.text + " &rarr; ");
+					}
+				}
+
+				pathElem.append(g.pred[k].p.text + " " + g.pred[k].v.text);
+
+			}
 
 			resultElem.append(pathElem);
 
-			var dValues = $("<table>", {class: "table table-striped"});
-			dValues.append($("<thead>", {html: '<tr><th>Vertex</th><th>Distance From Source</th></tr>'}));
+			var dValues = $("<table>", {
+				class: "table table-striped"
+			});
+			dValues.append($("<thead>", {
+				html: '<tr><th>Vertex</th><th>Distance From Source</th></tr>'
+			}));
 
-			for(var i in g.dist){
+			for (var i in g.dist) {
 				var row = $("<tr>");
-				var vertexLabelCell = $("<td>", {text: g.dist[i].v.text});
-				var dValueCell = $("<td>", {text: g.dist[i].d});				
+				var vertexLabelCell = $("<td>", {
+					text: g.dist[i].v.text
+				});
+				var dValueCell = $("<td>", {
+					text: g.dist[i].d
+				});
 				row.append(vertexLabelCell).append(dValueCell);
 				dValues.append(row);
 			}
@@ -263,11 +282,11 @@ function init() {
 	});
 
 	$("#presetSelector").on("change", function() {
-		
+
 		var preset = $(this).val();
 
-		if(preset){
-			$.get(preset, function(data){
+		if (preset) {
+			$.get(preset, function(data) {
 				localStorage["fsm"] = data;
 				restoreBackup();
 				location.reload();
