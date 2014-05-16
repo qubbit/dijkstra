@@ -8,6 +8,15 @@
  * Released under the MIT license
  */
 
+
+function fixCanvas(){
+	var c = $("#canvas");
+	var h = c.height();
+	var w = c.width();
+	c.attr("height", h);
+	c.attr("width", w);
+}
+
 if (typeof btoa == 'undefined') {
 	function btoa(str) {
 		var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
@@ -62,3 +71,5 @@ WeakMap.prototype = {
 function deepClone(o) {
 	return JSON.parse(JSON.stringify(o));
 }
+
+//fixCanvas();

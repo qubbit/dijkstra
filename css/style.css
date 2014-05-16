@@ -28,16 +28,16 @@ div{
 
 .box{
 	display: block;
-	max-width: 800px;
 	background: white;
 	border-radius: 3px;
-	margin: 10px auto;
 	box-shadow: 0 0 0 0,0 6px 12px rgba(34,34,34,0.1);
 }
 
 #instructions{
 	text-align: left;
-	clear: both;
+	height: 542px;
+	width: 300px;
+	float: right;
 }
 
 .error {
@@ -75,3 +75,10 @@ textarea {
 	height: 400px;
 	margin: 0 auto;
 }
+
+@media screen and (max-width : 1200px){
+	#instructions{
+		width: 100%;
+		height: auto;
+	}
+}		
