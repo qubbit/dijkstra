@@ -14,6 +14,11 @@ function init() {
 		constructor: Graph,
 
 		sanitize: function(){
+			
+			$.each(this.Vertices, function(k, v){
+				v.visited = false;
+			});
+
 			this.dist = [];
 			this.prev = [];
 			return true;
@@ -183,7 +188,7 @@ function init() {
 
 	$("#computeShortestPath").on("click", function() {
 
-		var g = new Graph(nodes, links);
+		var g = new Graph();
 
 		if (g.sanitize()) {
 			
