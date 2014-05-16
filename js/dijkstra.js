@@ -99,8 +99,6 @@ function init() {
 			for (var i in edges) {
 				var edge = edges[i];
 				if (edge.nodeA == u && edge.nodeB == v) {
-					// since we are storing the weights as string gotta
-					// parse it to get the integer value
 					return +edge.text;
 				}
 			}
@@ -111,11 +109,6 @@ function init() {
 		computeShortestPath: function() {
 
 			var source = this.getSourceVertex();
-
-			if (source == null) {
-				// Show error to the user that they need to choose a source vertex
-				return;
-			}
 
 			// Initialize SSSP
 			var vertices = this.Vertices;
@@ -184,7 +177,7 @@ function init() {
 		}
 	};
 
-	document.getElementById("computeShortestPath").onclick = function() {
+	$("#computeShortestPath").on("click", function() {
 
 		var g = new Graph();
 
@@ -192,7 +185,18 @@ function init() {
 			g.computeShortestPath();
 			console.log(g.dist);
 		}
-	}
+	});
+
+	$("#presetSelector").on("change", function() {
+		
+		var preset = $(this).val();
+		if(preset){
+			$.get(preset, function(data){
+				localStorage["fsm"] = data;
+				restoreBackup();
+			}, "text");
+		}
+	});
 }
 
 

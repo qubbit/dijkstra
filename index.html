@@ -8,6 +8,11 @@
 		<span class="error">Your browser does not support<br>the HTML5 &lt;canvas&gt; element</span>
 	</canvas>
 	<div class="box" id="toolbox">
+		<label for="presetSelector">Preset</label>
+		<select id="presetSelector">
+			<option value="">-- Select --</option>
+			<option value="sample.json">8 Vertices</option>
+		</select>
 		<button id="computeShortestPath">Find Shortest Path</button>
 		<button id="clearCanvas">Clear Canvas</button>
 		<p class="center">Export as: <a href="javascript:saveAsPNG()">PNG</a> | <a href="javascript:saveAsSVG()">SVG</a> | <a href="javascript:saveAsLaTeX()">LaTeX</a></p>
@@ -29,6 +34,7 @@
 		</ul>
 	</div>
 	<p>Created by Gopal Adhikari. Forked from Finite State Machine Designer by <a href="http://madebyevan.com/fsm">Evan Wallace</a></p>
+	 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 	<script type="text/javascript" src="js/utils.js"></script>	
 	<script type="text/javascript" src="js/dijkstra.js"></script>
 	<script type="text/javascript" src="js/fsm.js"></script>
