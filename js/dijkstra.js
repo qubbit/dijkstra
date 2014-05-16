@@ -188,6 +188,33 @@ function init() {
 					}
 				}
 			}
+		},
+
+		drawPath: function(ctx){
+			
+			var links = [];
+			var e = this.Edges;
+			var prev = this.prev;
+
+			for(var i in e){
+				for(var j in prev){
+					if(e[i].nodeA == prev[j].p && e[i].nodeB == prev[j].v){
+						links.push(e[i])
+						console.log(1);
+					}
+				}			
+			}
+
+			var color = "#33a51c";
+
+			for(var k in links){
+
+				links[k].nodeA.draw(ctx, color);
+				links[k].nodeB.draw(ctx, color);
+				links[k].draw(ctx, color);
+			}
+
+			console.log(links);
 		}
 	};
 
@@ -211,6 +238,9 @@ function init() {
 				row.append(vertexLabelCell).append(dValueCell);
 				dValues.append(row);
 			}
+
+			var ctx = $("#canvas")[0].getContext("2d");
+			g.drawPath(ctx);
 
 			$("#result").fadeIn().append(dValues);
 		}

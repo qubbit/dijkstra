@@ -100,7 +100,7 @@ Link.prototype.getEndPointsAndCircle = function() {
   };
 };
 
-Link.prototype.draw = function(c) {
+Link.prototype.draw = function(c, color) {
   var stuff = this.getEndPointsAndCircle();
   // draw arc
   c.beginPath();
@@ -110,6 +110,8 @@ Link.prototype.draw = function(c) {
     c.moveTo(stuff.startX, stuff.startY);
     c.lineTo(stuff.endX, stuff.endY);
   }
+  c.strokeWidth = "2px";
+  c.strokeStyle = color;
   c.stroke();
   // draw the head of the arrow
   if (stuff.hasCircle) {
@@ -191,12 +193,13 @@ Node.prototype.setAnchorPoint = function(x, y) {
   this.y = y + this.mouseOffsetY;
 };
 
-Node.prototype.draw = function(c) {
+Node.prototype.draw = function(c, color) {
   // draw the circle
   c.beginPath();
   c.arc(this.x, this.y, nodeRadius, 0, 2 * Math.PI, false);
+  c.strokeWidth = "2px";
+  c.strokeStyle = color;
   c.stroke();
-
   // draw the text
   drawText(c, this.text, this.x, this.y, null, selectedObject == this);
 
