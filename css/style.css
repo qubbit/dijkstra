@@ -27,10 +27,12 @@ div{
 }
 
 .box{
-	display: block;
 	background: white;
-	border-radius: 3px;
+}
+
+.main{
 	box-shadow: 0 0 0 0,0 6px 12px rgba(34,34,34,0.1);
+	border-radius: 3px;
 }
 
 #instructions{
