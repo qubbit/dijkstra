@@ -207,13 +207,21 @@ function init() {
 	$("#presetSelector").on("change", function() {
 		
 		var preset = $(this).val();
+
 		if(preset){
 			$.get(preset, function(data){
 				localStorage["fsm"] = data;
 				restoreBackup();
+				location.reload();
 			}, "text");
 		}
 	});
+
+	$("#clearCanvas").on("click", function() {
+		localStorage["fsm"] = null;
+		location.reload();
+	});
+
 }
 
 
