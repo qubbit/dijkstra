@@ -5,7 +5,7 @@ body {
 	text-align: center;
 	background: #e8e8e8;
 	margin: 0 30px 100px 30px;
-	font: 14px/18px 'Open Sans', 'Lucida Grande', 'Segoe UI', sans-serif;
+	font-family: 'Open Sans', 'Lucida Grande', 'Segoe UI', sans-serif;
 }
 
 b, strong{

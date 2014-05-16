@@ -87,8 +87,7 @@ function getNeighbors(Graph, u) {
 			neighbors.push(edge.nodeB);
 		}
 	}
-
-	console.log(u);
+	
 	return neighbors;
 }
 
