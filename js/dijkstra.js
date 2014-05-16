@@ -6,7 +6,7 @@ function init() {
 		this.Vertices = V || nodes;
 		this.Edges = E || links;
 		this.dist = [];
-		this.prev = [];
+		this.pred = [];
 	}
 
 	Graph.prototype = {
@@ -24,7 +24,7 @@ function init() {
 			});
 
 			this.dist = [];
-			this.prev = [];
+			this.pred = [];
 			
 			return true;
 		},
@@ -137,7 +137,7 @@ function init() {
 					});
 				}
 				
-				this.prev.push({
+				this.pred.push({
 					v: vertex,
 					p: undefined
 				});
@@ -174,14 +174,14 @@ function init() {
 					if (alt < this.getDistanceFromSource(v)) {
 
 						var di = this.getVertexIndex(this.dist, v);
-						var pi = this.getVertexIndex(this.prev, v);
+						var pi = this.getVertexIndex(this.pred, v);
 						
 						this.dist[di] = {
 							v: v,
 							d: alt
 						};
 
-						this.prev[pi] = {
+						this.pred[pi] = {
 							v: v,
 							p: u
 						};
@@ -194,13 +194,13 @@ function init() {
 			
 			var links = [];
 			var e = this.Edges;
-			var prev = this.prev;
+			var pred = this.pred;
 
 			ctx.canvas.height = ctx.canvas.height;
 
 			for(var i in e){
-				for(var j in prev){
-					if(e[i].nodeA == prev[j].p && e[i].nodeB == prev[j].v){
+				for(var j in pred){
+					if(e[i].nodeA == pred[j].p && e[i].nodeB == pred[j].v){
 						links.push(e[i])
 						console.log(1);
 					}
@@ -228,8 +228,22 @@ function init() {
 			
 			g.computeShortestPath();
 
-			$("#result").html("");
-			
+			var resultElem = $("#result");
+
+			resultElem.html("");
+
+			var pathElem = $("<h3>", {text: "Path: "});
+
+			var k;
+
+			for (k = 0; k < g.pred.length - 2; k++){
+				pathElem.append(g.pred[k].p.text + " " + g.pred[k].v.text + " &rarr; ");
+			}
+
+			pathElem.append(g.pred[k].p.text + " " + g.pred[k].v.text);
+
+			resultElem.append(pathElem);
+
 			var dValues = $("<table>", {class: "table table-striped"});
 			dValues.append($("<thead>", {html: '<tr><th>Vertex</th><th>Distance From Source</th></tr>'}));
 
@@ -244,7 +258,7 @@ function init() {
 			var ctx = $("#canvas")[0].getContext("2d");
 			g.drawPath(ctx);
 
-			$("#result").fadeIn().append(dValues);
+			resultElem.fadeIn().append(dValues);
 		}
 	});
 
