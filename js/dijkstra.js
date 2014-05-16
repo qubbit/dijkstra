@@ -1,188 +1,199 @@
 function init() {
 
-	var findSP = document.getElementById("computeShortestPath");
-
-	findSP.onclick = function() {
-		m_Graph = {
-			Vertices: nodes,
-			Edges: links
-		};
-		Dijkstra(m_Graph);
-	}
-}
-
-// Get source vertex of the graph
-function getSourceVertex(Graph) {
-
-	for (var i in Graph.Vertices) {
-		if (Graph.Vertices[i].isSourceNode) {
-			return Graph.Vertices[i];
-		}
+	Graph = function(V, E) {
+		this.Vertices = V || nodes;
+		this.Edges = E || links;
+		this.dist = [];
+		this.prev = [];
 	}
 
-	return null;
-}
+	Graph.prototype = {
 
-// Get vertex with minimum distance value
-function getMinVertex(dist) {
+		constructor: Graph,
 
-	var minVertex = dist[0].v;
-	var minDistance = Infinity;
+		sanitize: function(){
+			return true;
+		},
 
-	for (var i in dist) {
+		getSourceVertex: function() {
 
-		var elem = dist[i];
+			for (var i in this.Vertices) {
+				if (this.Vertices[i].isSourceNode) {
+					return this.Vertices[i];
+				}
+			}
 
-		if (elem.d < minDistance && !elem.v.visited) {
-			minVertex = elem.v;
-			minDistance = elem.d;
-		}
-	}
+			return null;
+		},
 
-	return minVertex;
-}
+		getMinVertex: function() {
 
-function getDistanceFromSource(dist, u) {
+			var minVertex = (this.dist) ? this.dist[0].v : null;
+			var minDistance = Infinity;
 
-	for (var i in dist) {
+			for (var i in this.dist) {
 
-		var elem = dist[i];
+				var elem = this.dist[i];
 
-		if (elem.v == u) {
-			return elem.d;
-		}
-	}
-}
+				if (elem.d < minDistance && !elem.v.visited) {
+					minVertex = elem.v;
+					minDistance = elem.d;
+				}
+			}
 
-function getVertexIndex(table, u) {
+			return minVertex;
+		},
 
-	for (var i in table) {
+		getDistanceFromSource: function(u) {
 
-		var elem = dist[i];
+			for (var i in this.dist) {
 
-		if (elem.v == u) {
-			return i;
-		}
-	}
-}
+				var elem = this.dist[i];
 
+				if (elem.v == u) {
+					return elem.d;
+				}
+			}
+		},
 
-function getInQIndex(Q, u) {
-	for (var i in Q) {
-		if (Q[i].text == u.text) {
-			return i;
-		}
-	}
-}
+		getVertexIndex: function(table, u) {
 
+			for (var i in table) {
 
-function getNeighbors(Graph, u) {
+				var elem = this.dist[i];
 
-	var edges = Graph.Edges;
-	var neighbors = [];
+				if (elem.v == u) {
+					return i;
+				}
+			}
+		},
 
-	for (var i in edges) {
-		var edge = edges[i];
-		if (edge.nodeA == u) {
-			neighbors.push(edge.nodeB);
-		}
-	}
-	
-	return neighbors;
-}
+		getInQIndex: function(Q, u) {
 
-function getDistanceBetween(Graph, u, v) {
+			for (var i in Q) {
+				if (Q[i].text == u.text) {
+					return i;
+				}
+			}
+		},
 
-	var edges = Graph.Edges;
+		getNeighbors: function(u) {
 
-	for (var i in edges) {
-		var edge = edges[i];
-		if (edge.nodeA == u && edge.nodeB == v) {
-			// since we are storing the weights as string gotta
-			// parse it to get the integer value
-			return +edge.text;
-		}
-	}
+			var edges = this.Edges;
+			var neighbors = [];
 
-	return Infinity;
-}
+			for (var i in edges) {
+				var edge = edges[i];
+				if (edge.nodeA == u) {
+					neighbors.push(edge.nodeB);
+				}
+			}
 
+			return neighbors;
+		},
 
-function Dijkstra(Graph) {
+		getDistanceBetween: function(u, v) {
 
-	var source = getSourceVertex(Graph);
+			var edges = this.Edges;
 
-	if (source == null) {
-		// Show error to the user that they need to choose a source vertex
-		return;
-	}
+			for (var i in edges) {
+				var edge = edges[i];
+				if (edge.nodeA == u && edge.nodeB == v) {
+					// since we are storing the weights as string gotta
+					// parse it to get the integer value
+					return +edge.text;
+				}
+			}
 
-	dist = [];
-	prev = [];
+			return Infinity;
+		},
 
-	// Initialize SSSP
-	var vertices = Graph.Vertices;
+		computeShortestPath: function() {
 
-	for (var i in vertices) {
+			var source = this.getSourceVertex();
 
-		var vertex = vertices[i];
-		if (vertex != source) {
-			dist.push({
-				v: vertex,
-				d: Infinity
+			if (source == null) {
+				// Show error to the user that they need to choose a source vertex
+				return;
+			}
+
+			// Initialize SSSP
+			var vertices = this.Vertices;
+
+			for (var i in vertices) {
+
+				var vertex = vertices[i];
+				if (vertex != source) {
+					this.dist.push({
+						v: vertex,
+						d: Infinity
+					});
+				}
+				
+				this.prev.push({
+					v: vertex,
+					p: undefined
+				});
+			}
+
+			this.dist.push({
+				v: source,
+				d: 0
 			});
-		}
-		prev.push({
-			v: vertex,
-			p: undefined
-		});
-	}
 
-	dist.push({
-		v: source,
-		d: 0
-	});
+			var Q = deepClone(vertices);
 
-	var Q = deepClone(vertices);
+			while (Q.length > 0) {
 
-	while (Q.length > 0) {
+				var u = this.getMinVertex(this.dist);
+				u.visited = true;
 
-		var u = getMinVertex(dist);
-		u.visited = true;
-
-		// remove u from Q
-		var index = getInQIndex(Q, u);
-		Q.splice(index, 1);
+				// Remove u from Q
+				var index = this.getInQIndex(Q, u);
+				Q.splice(index, 1);
 
 
-		if (getDistanceFromSource(dist, u) == Infinity) {
-			break;
-		}
+				if (this.getDistanceFromSource(u) == Infinity) {
+					break;
+				}
 
-		var neighbors = getNeighbors(Graph, u);
+				var neighbors = this.getNeighbors(u);
 
-		for (var i in neighbors) {
+				for (var i in neighbors) {
 
-			//Relax
-			var v = neighbors[i];
-			var alt = getDistanceFromSource(dist, u) + getDistanceBetween(Graph, u, v);
-			if (alt < getDistanceFromSource(dist, v)) {
+					// Relax
+					var v = neighbors[i];
+					var alt = this.getDistanceFromSource(u) + this.getDistanceBetween(u, v);
+					if (alt < this.getDistanceFromSource(v)) {
 
-				var di = getVertexIndex(dist, v);
-				var pi = getVertexIndex(prev, v);
-				dist[di] = {
-					v: v,
-					d: alt
-				};
-				prev[pi] = {
-					v: v,
-					p: u
-				};
+						var di = this.getVertexIndex(this.dist, v);
+						var pi = this.getVertexIndex(this.prev, v);
+						
+						this.dist[di] = {
+							v: v,
+							d: alt
+						};
+
+						this.prev[pi] = {
+							v: v,
+							p: u
+						};
+					}
+				}
 			}
 		}
-	}
+	};
 
-	console.log(dist, prev);
+	document.getElementById("computeShortestPath").onclick = function() {
+
+		var g = new Graph();
+
+		if (g.sanitize()) {
+			g.computeShortestPath();
+			console.log(g.dist);
+		}
+	}
 }
+
 
 window.onload = init();
