@@ -21,13 +21,10 @@ h1, h2, h3 {
 	font-weight: 400;
 }
 
-div{
-	padding: 20px;
-	box-sizing: border-box;
-}
-
-.box{
-	background: white;
+.row {
+	padding-top: 20px;
+	padding-bottom: 20px;
+	background: #fff;
 }
 
 .main{

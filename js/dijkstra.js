@@ -14,6 +14,10 @@ function init() {
 		constructor: Graph,
 
 		sanitize: function(){
+
+			if(!this.Vertices || !this.Edges){
+				return false;
+			}
 			
 			$.each(this.Vertices, function(k, v){
 				v.visited = false;
@@ -21,6 +25,7 @@ function init() {
 
 			this.dist = [];
 			this.prev = [];
+			
 			return true;
 		},
 
