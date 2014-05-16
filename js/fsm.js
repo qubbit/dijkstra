@@ -115,9 +115,9 @@ Link.prototype.draw = function(c, color) {
   c.stroke();
   // draw the head of the arrow
   if (stuff.hasCircle) {
-    drawArrow(c, stuff.endX, stuff.endY, stuff.endAngle - stuff.reverseScale * (Math.PI / 2));
+    drawArrow(c, stuff.endX, stuff.endY, stuff.endAngle - stuff.reverseScale * (Math.PI / 2), color);
   } else {
-    drawArrow(c, stuff.endX, stuff.endY, Math.atan2(stuff.endY - stuff.startY, stuff.endX - stuff.startX));
+    drawArrow(c, stuff.endX, stuff.endY, Math.atan2(stuff.endY - stuff.startY, stuff.endX - stuff.startX, color));
   }
   // draw the text
   if (stuff.hasCircle) {
@@ -607,13 +607,14 @@ function textToXML(text) {
   return result;
 }
 
-function drawArrow(c, x, y, angle) {
+function drawArrow(c, x, y, angle, color) {
   var dx = Math.cos(angle);
   var dy = Math.sin(angle);
   c.beginPath();
   c.moveTo(x, y);
   c.lineTo(x - 8 * dx + 5 * dy, y - 8 * dy - 5 * dx);
   c.lineTo(x - 8 * dx - 5 * dy, y - 8 * dy + 5 * dx);
+  c.fillStyle = color;
   c.fill();
 }
 

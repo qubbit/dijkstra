@@ -196,6 +196,8 @@ function init() {
 			var e = this.Edges;
 			var prev = this.prev;
 
+			ctx.canvas.height = ctx.canvas.height;
+
 			for(var i in e){
 				for(var j in prev){
 					if(e[i].nodeA == prev[j].p && e[i].nodeB == prev[j].v){
