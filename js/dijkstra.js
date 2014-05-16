@@ -1,6 +1,8 @@
 function init() {
 
-	Graph = function(V, E) {
+	"use strict";
+
+	window.Graph = function(V, E) {
 		this.Vertices = V || nodes;
 		this.Edges = E || links;
 		this.dist = [];
@@ -181,7 +183,7 @@ function init() {
 
 	$("#computeShortestPath").on("click", function() {
 
-		var g = new Graph();
+		var g = new Graph(nodes, links);
 
 		if (g.sanitize()) {
 			

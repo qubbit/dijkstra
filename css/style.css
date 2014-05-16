@@ -65,6 +65,10 @@ div{
 	display: inline-block;
 }
 
+footer{
+	text-align: center;
+}
+
 textarea {
 	display: none;
 	width: 75%;
