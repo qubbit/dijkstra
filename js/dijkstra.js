@@ -12,6 +12,8 @@ function init() {
 		constructor: Graph,
 
 		sanitize: function(){
+			this.dist = [];
+			this.prev = [];
 			return true;
 		},
 
@@ -182,8 +184,23 @@ function init() {
 		var g = new Graph();
 
 		if (g.sanitize()) {
+			
 			g.computeShortestPath();
-			console.log(g.dist);
+
+			$("#result").html("");
+			
+			var dValues = $("<table>", {class: "table table-striped"});
+			dValues.append($("<thead>", {html: '<tr><th>Vertex</th><th>Distance From Source</th></tr>'}));
+
+			for(var i in g.dist){
+				var row = $("<tr>");
+				var vertexLabelCell = $("<td>", {text: g.dist[i].v.text});
+				var dValueCell = $("<td>", {text: g.dist[i].d});				
+				row.append(vertexLabelCell).append(dValueCell);
+				dValues.append(row);
+			}
+
+			$("#result").fadeIn().append(dValues);
 		}
 	});
 
