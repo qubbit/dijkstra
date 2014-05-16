@@ -46,7 +46,7 @@ WeakMap.prototype = {
 			this.map[obj.uid] = value;
 		} else{
 			obj.uid = this.uid;
-			this.map[this.uid] = value;			
+			this.map[this.uid] = value;
 		}
 
 		this.uid++;
@@ -56,3 +56,9 @@ WeakMap.prototype = {
 		return this.map[obj.uid];
 	}
 };
+
+// An ugly way to deep clone objects but it works for 
+// objects with primitive keys
+function deepClone(o) {
+	return JSON.parse(JSON.stringify(o));
+}

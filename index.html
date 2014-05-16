@@ -5,13 +5,16 @@
 	<link rel="stylesheet" href="css/style.css">
 </head><body>
 	<h1>Dijkstra's Algorithm Solver</h1>
-	<canvas id="canvas" width="800" height="600">
+	<canvas class="box" id="canvas" width="800" height="600">
 		<span class="error">Your browser does not support<br>the HTML5 &lt;canvas&gt; element</span>
 	</canvas>
-	<div>
+	<div class="box" id="toolbox">
 		<button id="computeShortestPath">Find Shortest Path</button>
 		<button id="clearCanvas">Clear Canvas</button>
 		<p class="center">Export as: <a href="javascript:saveAsPNG()">PNG</a> | <a href="javascript:saveAsSVG()">SVG</a> | <a href="javascript:saveAsLaTeX()">LaTeX</a></p>
+	</div>
+	<div class="box" id="instructions">
+		<h2>Instructions</h2>
 		<textarea id="output"></textarea>
 		<p>The big white box above is the where you can draw vertices and edges. Here's how to use it:</p>
 		<ul>
