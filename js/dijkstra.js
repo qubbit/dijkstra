@@ -196,7 +196,13 @@ function init() {
 			var e = this.Edges;
 			var pred = this.pred;
 
-			ctx.canvas.height = ctx.canvas.height;
+			// ctx.canvas.height = ctx.canvas.height;
+
+			ctx.save();
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			
+			ctx.translate(0.5, 0.5);
+			
 
 			for (var i in e) {
 				for (var j in pred) {
@@ -214,6 +220,8 @@ function init() {
 				links[k].nodeB.draw(ctx, color);
 				links[k].draw(ctx, color);
 			}
+
+			ctx.restore();
 		}
 	};
 
