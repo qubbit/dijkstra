@@ -294,7 +294,7 @@ function init() {
 		var preset = $(this).val();
 
 		if (preset) {
-			$.get(preset, function(data) {
+			$.get('presets/'+preset, function(data) {
 				localStorage["fsm"] = data;
 				restoreBackup();
 				location.reload();
