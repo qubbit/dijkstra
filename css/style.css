@@ -39,6 +39,10 @@ h1, h2, h3 {
 	float: right;
 }
 
+#canvas{
+	float: left;
+}
+
 .error {
 	display: block;
 	color: red;
@@ -66,6 +70,7 @@ h1, h2, h3 {
 
 footer{
 	text-align: center;
+	margin: 20px auto;
 }
 
 textarea {
