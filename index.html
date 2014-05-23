@@ -14,7 +14,7 @@
 			</canvas>
 			<div class="col-md-4" id="instructions">
 				<h2>Instructions</h2>
-				<p>The big white box above is the where you can draw vertices and edges. Here's how to use it:</p>
+				<p>The big white box on the side is where you can draw vertices and edges. Here's how to use it:</p>
 				<ul>
 					<li><b>Add a vertex (node):</b> double-click on the canvas</li>
 					<li><b>Make source vertex:</b> double-click on an existing vertex</li>
@@ -31,6 +31,8 @@
 			<div class="clearfix"></div>
 		</div>	
 
+		<div class="alert alert-warning" id="error-message"></div>
+
 		<div class="box" id="toolbox">
 			<label for="presetSelector">Preset</label>
 			<select class="form-control" id="presetSelector">
@@ -43,8 +45,10 @@
 			<button class="btn btn-primary" id="clearCanvas">Clear Canvas</button>
 			<p class="center">Export as: <a href="javascript:saveAsPNG()">PNG</a> | <a href="javascript:saveAsSVG()">SVG</a> | <a href="javascript:saveAsLaTeX()">LaTeX</a></p>
 		</div>
-		<div class="box" id="result"></div>
-		<textarea id="output"></textarea>
+		<div class="result-container">
+			<div class="box" id="result"></div>
+			<textarea id="output"></textarea>
+		<div class="toolbox-container">
 	</div>
 	<footer>
 		<p>Created by Gopal Adhikari. Powered by FSM Designer by <a href="http://madebyevan.com/fsm">Evan Wallace</a></p>

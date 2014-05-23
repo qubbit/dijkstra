@@ -1,6 +1,6 @@
 function init() {
 
-	"use strict";
+	//"use strict";
 
 	window.Graph = function(V, E) {
 		this.Vertices = V || nodes;
@@ -16,8 +16,14 @@ function init() {
 		sanitize: function() {
 
 			if (!this.Vertices || !this.Edges) {
-				return false;
+				return {message: 'The graph should contain edges AND vertices', success: false};
+			} else if(!this.getSourceVertex()){
+				return {message: 'A vertex should be marked as source', success: false};
+			} else if(this.negativeWeightsExists()){
+				return {message: 'The graph contains negative edge weights, Dijkstra\'s algorithm is not guaranteed to work in this situation', success: false};
 			}
+
+			// Reset the graph
 
 			$.each(this.Vertices, function(k, v) {
 				v.visited = false;
@@ -26,7 +32,23 @@ function init() {
 			this.dist = [];
 			this.pred = [];
 
-			return true;
+			// End reset
+
+			return {message: '', success: true};
+		},
+
+		negativeWeightsExists: function(){
+			
+			for(var i in this.Edges){
+
+				var edge = this.Edges[i];
+
+				if(+edge.text < 0){
+					return true;
+				}
+			}
+
+			return false;
 		},
 
 		getSourceVertex: function() {
@@ -227,9 +249,13 @@ function init() {
 
 	$("#computeShortestPath").on("click", function() {
 
-		var g = new Graph();
+		g = new Graph();
 
-		if (g.sanitize()) {
+		var error = g.sanitize();
+
+		if (error.success) {
+
+			$("#error-message").fadeOut().html('');
 
 			g.computeShortestPath();
 
@@ -245,20 +271,26 @@ function init() {
 
 			var pred = g.pred;
 
-			if (pred.length > 1) {
+			if (pred.length) {
 
-				for (k = 0; k < pred.length - 2; k++) {
+				var p, v;
 
-					var p = g.pred[k].p;
-					var v = g.pred[k].v;
+				for (k = 0; k < pred.length - 1; k++) {
+
+					p = g.pred[k].p;
+					v = g.pred[k].v;
 
 					if (p && v) {
-						pathElem.append(g.pred[k].p.text + " " + g.pred[k].v.text + " &rarr; ");
+						pathElem.append(g.pred[k].p.text + " &rarr; " + g.pred[k].v.text + ", ");
 					}
 				}
 
-				pathElem.append(g.pred[k].p.text + " " + g.pred[k].v.text);
+				p = g.pred[k].p;
+				v = g.pred[k].v
 
+				if (p && v) {
+					pathElem.append(g.pred[k].p.text + " &rarr; " + g.pred[k].v.text);
+				}
 			}
 
 			resultElem.append(pathElem);
@@ -286,6 +318,8 @@ function init() {
 			g.drawPath(ctx);
 
 			resultElem.fadeIn().append(dValues);
+		} else{
+			$("#error-message").fadeIn().text(error.message);
 		}
 	});
 
