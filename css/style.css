@@ -1,88 +1,90 @@
 @import url(http://fonts.googleapis.com/css?family=Open+Sans:400,300,700);
 @import url(http://fonts.googleapis.com/css?family=Roboto+Slab:400,300,700);
+
 body {
-	background: #e8e8e8;
-	margin: 0 30px 100px 30px;
-	font-family: 'Open Sans', 'Lucida Grande', 'Segoe UI', sans-serif
-}
-b,
-strong {
-	font-weight: 700
-}
-input,
-button,
-textarea,
-label {
-	font-family: 'Open Sans'
-}
-h1,
-h2,
-h3 {
-	text-align: center;
-	font-family: 'Roboto Slab';
-	font-weight: 400
-}
-.row {
-	padding-top: 20px;
-	padding-bottom: 20px;
-	background: #fff
-}
-.main {
-	box-shadow: 0 0 0 0, 0 6px 12px rgba(34, 34, 34, 0.1);
-	border-radius: 3px
-}
-#instructions {
-	text-align: left;
-	height: 542px;
-	width: 300px;
-	float: right
-}
-#canvas {
-	float: left
-}
-.error {
-	display: block;
-	color: red;
-	font-size: 28px;
-	line-height: 30px;
-	padding: 30px
+  background: #e8e8e8;
+  margin: 0 30px 100px 30px;
+  font-family: 'Open Sans', 'Lucida Grande', 'Segoe UI', sans-serif;
 }
 
-#error-message {
-	display: none;
+b, strong{
+  font-weight: 700;
+}
+
+input, button, textarea, label{
+  font-family: 'Open Sans';
+}
+
+h1, h2, h3 {
+  text-align: center;
+  font-family: 'Roboto Slab';
+  font-weight: 400;
+}
+
+.row {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  background: #fff;
+}
+
+.main{
+  box-shadow: 0 0 0 0,0 6px 12px rgba(34,34,34,0.1);
+  border-radius: 3px;
+}
+
+#instructions{
+  text-align: left;
+  height: 542px;
+  width: 300px;
+  float: right;
+}
+
+#canvas{
+  float: left;
+  border: 1px solid #444;
+  padding: 10px;
+}
+
+.error {
+  display: block;
+  color: red;
+  font-size: 28px;
+  line-height: 30px;
+  padding: 30px;
 }
 
 .center {
-	text-align: center
-}
-#toolbox {
-	text-align: center
-}
-#result {
-	display: none
-}
-#presetSelector {
-	width: auto;
-	display: inline-block
+  text-align: center;
 }
 
-.result-container{
-	padding: 50px;
+#toolbox{
+  text-align: center;
 }
 
-footer {
-	text-align: center;
-	margin: 20px auto
+#result{
+  display: none;
 }
+
+#presetSelector{
+  width: auto;
+  display: inline-block;
+}
+
+footer{
+  text-align: center;
+  margin: 20px auto;
+}
+
 textarea {
-	display: none;
-	width: 75%;
-	height: 400px;
-	margin: 0 auto
+  display: none;
+  width: 75%;
+  height: 400px;
+  margin: 0 auto;
 }
-@media screen and (max-width:1200px) {
-	#instructions {
-		width: 100%;
-		height: auto
-	}
-}
+
+@media screen and (max-width : 1200px){
+  #instructions{
+    width: 100%;
+    height: auto;
+  }
+}   

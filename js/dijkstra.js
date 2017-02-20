@@ -1,345 +1,311 @@
 function init() {
 
-	//"use strict";
+  "use strict";
 
-	window.Graph = function(V, E) {
-		this.Vertices = V || nodes;
-		this.Edges = E || links;
-		this.dist = [];
-		this.pred = [];
-	}
+  window.Graph = function(V, E) {
+    this.Vertices = V || nodes;
+    this.Edges = E || links;
+    this.dist = [];
+    this.pred = [];
+  }
 
-	Graph.prototype = {
+  Graph.prototype = {
 
-		constructor: Graph,
+    constructor: Graph,
 
-		sanitize: function() {
+    sanitize: function() {
 
-			if (!this.Vertices || !this.Edges) {
-				return {message: 'The graph should contain edges AND vertices', success: false};
-			} else if(!this.getSourceVertex()){
-				return {message: 'A vertex should be marked as source', success: false};
-			} else if(this.negativeWeightsExists()){
-				return {message: 'The graph contains negative edge weights, Dijkstra\'s algorithm is not guaranteed to work in this situation', success: false};
-			}
+      if (!this.Vertices || !this.Edges) {
+        return false;
+      }
 
-			// Reset the graph
+      $.each(this.Vertices, function(k, v) {
+        v.visited = false;
+      });
 
-			$.each(this.Vertices, function(k, v) {
-				v.visited = false;
-			});
+      this.dist = [];
+      this.pred = [];
 
-			this.dist = [];
-			this.pred = [];
+      return true;
+    },
 
-			// End reset
+    getSourceVertex: function() {
 
-			return {message: '', success: true};
-		},
+      for (var i in this.Vertices) {
+        if (this.Vertices[i].isSourceNode) {
+          return this.Vertices[i];
+        }
+      }
 
-		negativeWeightsExists: function(){
-			
-			for(var i in this.Edges){
+      return null;
+    },
 
-				var edge = this.Edges[i];
+    getMinVertex: function() {
 
-				if(+edge.text < 0){
-					return true;
-				}
-			}
+      var minVertex = (this.dist) ? this.dist[0].v : null;
+      var minDistance = Infinity;
 
-			return false;
-		},
+      for (var i in this.dist) {
 
-		getSourceVertex: function() {
+        var elem = this.dist[i];
 
-			for (var i in this.Vertices) {
-				if (this.Vertices[i].isSourceNode) {
-					return this.Vertices[i];
-				}
-			}
+        if (elem.d < minDistance && !elem.v.visited) {
+          minVertex = elem.v;
+          minDistance = elem.d;
+        }
+      }
 
-			return null;
-		},
+      return minVertex;
+    },
 
-		getMinVertex: function() {
+    getDistanceFromSource: function(u) {
 
-			var minVertex = (this.dist) ? this.dist[0].v : null;
-			var minDistance = Infinity;
+      for (var i in this.dist) {
 
-			for (var i in this.dist) {
+        var elem = this.dist[i];
 
-				var elem = this.dist[i];
+        if (elem.v == u) {
+          return elem.d;
+        }
+      }
+    },
 
-				if (elem.d < minDistance && !elem.v.visited) {
-					minVertex = elem.v;
-					minDistance = elem.d;
-				}
-			}
+    getVertexIndex: function(table, u) {
 
-			return minVertex;
-		},
+      for (var i in table) {
 
-		getDistanceFromSource: function(u) {
+        var elem = this.dist[i];
 
-			for (var i in this.dist) {
+        if (elem.v == u) {
+          return i;
+        }
+      }
+    },
 
-				var elem = this.dist[i];
+    getInQIndex: function(Q, u) {
 
-				if (elem.v == u) {
-					return elem.d;
-				}
-			}
-		},
+      for (var i in Q) {
+        if (Q[i].text == u.text) {
+          return i;
+        }
+      }
+    },
 
-		getVertexIndex: function(table, u) {
+    getNeighbors: function(u) {
 
-			for (var i in table) {
+      var edges = this.Edges;
+      var neighbors = [];
 
-				var elem = this.dist[i];
+      for (var i in edges) {
+        var edge = edges[i];
+        if (edge.nodeA == u) {
+          neighbors.push(edge.nodeB);
+        }
+      }
 
-				if (elem.v == u) {
-					return i;
-				}
-			}
-		},
+      return neighbors;
+    },
 
-		getInQIndex: function(Q, u) {
+    getDistanceBetween: function(u, v) {
 
-			for (var i in Q) {
-				if (Q[i].text == u.text) {
-					return i;
-				}
-			}
-		},
+      var edges = this.Edges;
 
-		getNeighbors: function(u) {
+      for (var i in edges) {
+        var edge = edges[i];
+        if (edge.nodeA == u && edge.nodeB == v) {
+          return +edge.text;
+        }
+      }
 
-			var edges = this.Edges;
-			var neighbors = [];
+      return Infinity;
+    },
 
-			for (var i in edges) {
-				var edge = edges[i];
-				if (edge.nodeA == u) {
-					neighbors.push(edge.nodeB);
-				}
-			}
+    computeShortestPath: function() {
 
-			return neighbors;
-		},
+      var source = this.getSourceVertex();
 
-		getDistanceBetween: function(u, v) {
+      // Initialize SSSP
+      var vertices = this.Vertices;
 
-			var edges = this.Edges;
+      for (var i in vertices) {
 
-			for (var i in edges) {
-				var edge = edges[i];
-				if (edge.nodeA == u && edge.nodeB == v) {
-					return +edge.text;
-				}
-			}
+        var vertex = vertices[i];
+        if (vertex != source) {
+          this.dist.push({
+            v: vertex,
+            d: Infinity
+          });
+        }
 
-			return Infinity;
-		},
+        this.pred.push({
+          v: vertex,
+          p: undefined
+        });
+      }
 
-		computeShortestPath: function() {
+      this.dist.push({
+        v: source,
+        d: 0
+      });
 
-			var source = this.getSourceVertex();
+      var Q = deepClone(vertices);
 
-			// Initialize SSSP
-			var vertices = this.Vertices;
+      while (Q.length > 0) {
 
-			for (var i in vertices) {
+        var u = this.getMinVertex(this.dist);
+        u.visited = true;
 
-				var vertex = vertices[i];
-				if (vertex != source) {
-					this.dist.push({
-						v: vertex,
-						d: Infinity
-					});
-				}
+        // Remove u from Q
+        var index = this.getInQIndex(Q, u);
+        Q.splice(index, 1);
 
-				this.pred.push({
-					v: vertex,
-					p: undefined
-				});
-			}
 
-			this.dist.push({
-				v: source,
-				d: 0
-			});
+        if (this.getDistanceFromSource(u) == Infinity) {
+          break;
+        }
 
-			var Q = deepClone(vertices);
+        var neighbors = this.getNeighbors(u);
 
-			while (Q.length > 0) {
+        for (var i in neighbors) {
 
-				var u = this.getMinVertex(this.dist);
-				u.visited = true;
+          // Relax
+          var v = neighbors[i];
+          var alt = this.getDistanceFromSource(u) + this.getDistanceBetween(u, v);
+          if (alt < this.getDistanceFromSource(v)) {
 
-				// Remove u from Q
-				var index = this.getInQIndex(Q, u);
-				Q.splice(index, 1);
+            var di = this.getVertexIndex(this.dist, v);
+            var pi = this.getVertexIndex(this.pred, v);
 
+            this.dist[di] = {
+              v: v,
+              d: alt
+            };
 
-				if (this.getDistanceFromSource(u) == Infinity) {
-					break;
-				}
+            this.pred[pi] = {
+              v: v,
+              p: u
+            };
+          }
+        }
+      }
+    },
 
-				var neighbors = this.getNeighbors(u);
+    drawPath: function(ctx) {
 
-				for (var i in neighbors) {
+      var links = [];
+      var e = this.Edges;
+      var pred = this.pred;
 
-					// Relax
-					var v = neighbors[i];
-					var alt = this.getDistanceFromSource(u) + this.getDistanceBetween(u, v);
-					if (alt < this.getDistanceFromSource(v)) {
+      // ctx.canvas.height = ctx.canvas.height;
 
-						var di = this.getVertexIndex(this.dist, v);
-						var pi = this.getVertexIndex(this.pred, v);
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-						this.dist[di] = {
-							v: v,
-							d: alt
-						};
+      ctx.translate(0.5, 0.5);
 
-						this.pred[pi] = {
-							v: v,
-							p: u
-						};
-					}
-				}
-			}
-		},
 
-		drawPath: function(ctx) {
+      for (var i in e) {
+        for (var j in pred) {
+          if (e[i].nodeA == pred[j].p && e[i].nodeB == pred[j].v) {
+            links.push(e[i])
+          }
+        }
+      }
 
-			var links = [];
-			var e = this.Edges;
-			var pred = this.pred;
+      var color = "#33a51c";
 
-			// ctx.canvas.height = ctx.canvas.height;
+      for (var k in links) {
 
-			ctx.save();
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
-			
-			ctx.translate(0.5, 0.5);
-			
+        links[k].nodeA.draw(ctx, color);
+        links[k].nodeB.draw(ctx, color);
+        links[k].draw(ctx, color);
+      }
 
-			for (var i in e) {
-				for (var j in pred) {
-					if (e[i].nodeA == pred[j].p && e[i].nodeB == pred[j].v) {
-						links.push(e[i])
-					}
-				}
-			}
+      ctx.restore();
+    }
+  };
 
-			var color = "#33a51c";
+  $("#computeShortestPath").on("click", function() {
 
-			for (var k in links) {
+    var g = new Graph();
 
-				links[k].nodeA.draw(ctx, color);
-				links[k].nodeB.draw(ctx, color);
-				links[k].draw(ctx, color);
-			}
+    if (g.sanitize()) {
 
-			ctx.restore();
-		}
-	};
+      g.computeShortestPath();
 
-	$("#computeShortestPath").on("click", function() {
+      var resultElem = $("#result");
 
-		g = new Graph();
+      resultElem.html("");
 
-		var error = g.sanitize();
+      var pathElem = $("<h3>", {
+        text: "Path: "
+      });
 
-		if (error.success) {
+      var k;
 
-			$("#error-message").fadeOut().html('');
+      var pred = g.pred;
 
-			g.computeShortestPath();
+      if (pred.length > 1) {
 
-			var resultElem = $("#result");
+        for (k = 0; k < pred.length - 2; k++) {
 
-			resultElem.html("");
+          var p = g.pred[k].p;
+          var v = g.pred[k].v;
 
-			var pathElem = $("<h3>", {
-				text: "Path: "
-			});
+          if (p && v) {
+            pathElem.append(g.pred[k].p.text + " " + g.pred[k].v.text + " &rarr; ");
+          }
+        }
 
-			var k;
+        pathElem.append(g.pred[k].p.text + " " + g.pred[k].v.text);
 
-			var pred = g.pred;
+      }
 
-			if (pred.length) {
+      resultElem.append(pathElem);
 
-				var p, v;
+      var dValues = $("<table>", {
+        class: "table table-striped"
+      });
+      dValues.append($("<thead>", {
+        html: '<tr><th>Vertex</th><th>Distance From Source</th></tr>'
+      }));
 
-				for (k = 0; k < pred.length - 1; k++) {
+      for (var i in g.dist) {
+        var row = $("<tr>");
+        var vertexLabelCell = $("<td>", {
+          text: g.dist[i].v.text
+        });
+        var dValueCell = $("<td>", {
+          text: g.dist[i].d
+        });
+        row.append(vertexLabelCell).append(dValueCell);
+        dValues.append(row);
+      }
 
-					p = g.pred[k].p;
-					v = g.pred[k].v;
+      var ctx = $("#canvas")[0].getContext("2d");
+      g.drawPath(ctx);
 
-					if (p && v) {
-						pathElem.append(g.pred[k].p.text + " &rarr; " + g.pred[k].v.text + ", ");
-					}
-				}
+      resultElem.fadeIn().append(dValues);
+    }
+  });
 
-				p = g.pred[k].p;
-				v = g.pred[k].v
+  $("#presetSelector").on("change", function() {
 
-				if (p && v) {
-					pathElem.append(g.pred[k].p.text + " &rarr; " + g.pred[k].v.text);
-				}
-			}
+    var preset = $(this).val();
 
-			resultElem.append(pathElem);
+    if (preset) {
+      $.get('presets/'+preset, function(data) {
+        localStorage["fsm"] = data;
+        restoreBackup();
+        location.reload();
+      }, "text");
+    }
+  });
 
-			var dValues = $("<table>", {
-				class: "table table-striped"
-			});
-			dValues.append($("<thead>", {
-				html: '<tr><th>Vertex</th><th>Distance From Source</th></tr>'
-			}));
-
-			for (var i in g.dist) {
-				var row = $("<tr>");
-				var vertexLabelCell = $("<td>", {
-					text: g.dist[i].v.text
-				});
-				var dValueCell = $("<td>", {
-					text: g.dist[i].d
-				});
-				row.append(vertexLabelCell).append(dValueCell);
-				dValues.append(row);
-			}
-
-			var ctx = $("#canvas")[0].getContext("2d");
-			g.drawPath(ctx);
-
-			resultElem.fadeIn().append(dValues);
-		} else{
-			$("#error-message").fadeIn().text(error.message);
-		}
-	});
-
-	$("#presetSelector").on("change", function() {
-
-		var preset = $(this).val();
-
-		if (preset) {
-			$.get('presets/'+preset, function(data) {
-				localStorage["fsm"] = data;
-				restoreBackup();
-				location.reload();
-			}, "text");
-		}
-	});
-
-	$("#clearCanvas").on("click", function() {
-		localStorage["fsm"] = null;
-		location.reload();
-	});
+  $("#clearCanvas").on("click", function() {
+    localStorage["fsm"] = null;
+    location.reload();
+  });
 
 }
 
