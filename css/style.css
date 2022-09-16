@@ -10,7 +10,7 @@ html {
   --title-font-family: 'Roboto Slab';
   --burnt-sienna: #dd6e42ff;
   --dutch-white: #e8dab2ff;
-  --cadet: #4f6d7aff;
+  --cadet: #1c4777;
   --columbia-blue: #c0d6dfff;
   --platinum: #eaeaeaff;
 }
@@ -78,6 +78,13 @@ a {
   font-size: 3rem;
 }
 
+.secondary-title {
+  background: var(--cadet);
+  color: var(--platinum);
+  padding: 1rem;
+  font-size: 2.5rem;
+}
+
 .btn,
 .select {
   user-select: none;
@@ -85,13 +92,16 @@ a {
   align-items: center;
   justify-content: center;
   border-radius: 0.5rem;
-  font-weight: 600;
   border-width: 1px;
   border: 1px transparent;
   padding: 0.5rem 1rem;
   background: var(--cadet);
   color: var(--platinum);
   font-size: 2rem;
+}
+
+.ttu {
+  text-transform: uppercase;
 }
 
 h1,
@@ -144,10 +154,6 @@ h3 {
 
 #toolbox {
   text-align: center;
-}
-
-#result {
-  // display: none;
 }
 
 #presetSelector {
@@ -212,6 +218,8 @@ textarea {
   font-weight: bold;
   color: var(--cadet);
 }
+
+.code:empty { display: none; }
 
 .code {
   padding: 1rem;

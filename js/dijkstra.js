@@ -287,6 +287,8 @@ function init() {
     localStorage['fsm'] = '';
     clearGraph();
     draw();
+    const resultElem = $.select('#result');
+    resultElem.innerHTML = '';
   });
 }
 
