@@ -1,57 +1,87 @@
-<!doctype html>
-<html><head>
-<title>Dijkstra's Algorithm Solver</title>
-<link rel="icon" type="image/png" href="favicon.png" />
-<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-<link rel="stylesheet" href="css/style.css">
-</head>
-<body class="container">
-  <h1>Dijkstra's Algorithm Solver</h1>
-  <div class="row">
-    <div class="box">
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Dijkstra's Algorithm Solver</title>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body class="container">
+    <div class="dg">
+      <h1 class="main-title">Dijkstra's Algorithm Solver</h1>
+    </div>
+    <div class="df jc gap-2">
       <canvas id="canvas" width="800" height="600">
-        <span class="error">Your browser does not support<br>the HTML5 &lt;canvas&gt; element</span>
+        <span class="error"
+          >Your browser does not support<br />the HTML5 &lt;canvas&gt;
+          element</span
+        >
       </canvas>
-      <div class="col-md-4" id="instructions">
-        <h2>Instructions</h2>
-        <p>The big white box above is the where you can draw vertices and edges. Here's how to use it:</p>
-        <ul>
-          <li><b>Add a vertex (node):</b> double-click on the canvas</li>
-          <li><b>Make source vertex:</b> double-click on an existing vertex</li>
-          <li><b>Add an edge:</b> shift-drag on the canvas from one vertex to another</li>
-          <li><b>Move something:</b> drag it around</li>
-          <li><b>Delete something:</b> click it and press the delete key (not the backspace key)</li>
-        </ul>
-        <ul>
-          <li><b>Type numeric subscript:</b> put an underscore before the number (like "S_0")</li>
-          <li><b>Type greek letter:</b> put a backslash before it (like "\beta")</li>
-        </ul>
+      <div class="df flex-col ac">
+        <div class="box" id="toolbox">
+          <label for="presetSelector">Preset</label>
+          <select class="select form-control" id="presetSelector">
+            <option value="">-- Select --</option>
+            <option value="dag_clrs.json">DAG CLRS</option>
+            <option value="5vertices.json">5 Vertices</option>
+            <option value="8vertices.json">8 Vertices</option>
+          </select>
+          <button class="btn btn-primary" id="computeShortestPath">
+            Shortest Path
+          </button>
+          <button class="btn btn-primary" id="clearCanvas">Clear Canvas</button>
+          <p class="center">
+            Export as: <a href="javascript:saveAsPNG()">PNG</a> |
+            <a href="javascript:saveAsSVG()">SVG</a> |
+            <a href="javascript:saveAsLaTeX()">LaTeX</a>
+          </p>
+        </div>
+        <div class="box" id="result"></div>
       </div>
-
-      <div class="clearfix"></div>
     </div>
-
-    <div class="box" id="toolbox">
-      <label for="presetSelector">Preset</label>
-      <select class="form-control" id="presetSelector">
-        <option value="">-- Select --</option>
-        <option value="dag_clrs.json">DAG CLRS</option>
-        <option value="5vertices.json">5 Vertices</option>
-        <option value="8vertices.json">8 Vertices</option>
-      </select>
-      <button class="btn btn-primary" id="computeShortestPath">Find Shortest Path</button>
-      <button class="btn btn-primary" id="clearCanvas">Clear Canvas</button>
-      <p class="center">Export as: <a href="javascript:saveAsPNG()">PNG</a> | <a href="javascript:saveAsSVG()">SVG</a> | <a href="javascript:saveAsLaTeX()">LaTeX</a></p>
+    <div class="row">
+      <pre class="code" id="output"></pre>
+      <h2>Instructions</h2>
+      <p>
+        The big white box above is the where you can draw vertices and edges.
+        Here's how to use it:
+      </p>
+      <ul>
+        <li><b>Add a vertex (node):</b> double-click on the canvas</li>
+        <li><b>Make source vertex:</b> double-click on an existing vertex</li>
+        <li>
+          <b>Add an edge:</b> shift-drag on the canvas from one vertex to
+          another
+        </li>
+        <li><b>Move something:</b> drag it around</li>
+        <li>
+          <b>Delete something:</b> click it and press the delete key (not the
+          backspace key)
+        </li>
+        <li>
+          <b>Type numeric subscript:</b> put an underscore before the number
+          (like "S_0")
+        </li>
+        <li>
+          <b>Type greek letter:</b> put a backslash before it (like "\beta")
+        </li>
+      </ul>
     </div>
-    <div class="box" id="result"></div>
-    <textarea id="output"></textarea>
-  </div>
-  <footer>
-    <p>Created by Gopal Adhikari. Powered by FSM Designer by <a href="http://madebyevan.com/fsm">Evan Wallace</a></p>
-    <p><a href="https://github.com/qubbit/dijkstra">Fork this project on GitHub</a></p>
-  </footer>
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-  <script type="text/javascript" src="js/utils.js"></script>
-  <script type="text/javascript" src="js/dijkstra.js"></script>
-  <script type="text/javascript" src="js/fsm.js"></script>
-</body></html>
+    <div class="row">
+      <footer>
+        <p>
+          Created by Gopal Adhikari. Powered by FSM Designer by
+          <a href="http://madebyevan.com/fsm">Evan Wallace</a>
+        </p>
+        <p>
+          <a href="https://github.com/qubbit/dijkstra"
+            >Fork this project on GitHub</a
+          >
+        </p>
+      </footer>
+    </div>
+    <script type="text/javascript" src="js/utils.js"></script>
+    <script type="text/javascript" src="js/dijkstra.js"></script>
+    <script type="text/javascript" src="js/fsm.js"></script>
+  </body>
+</html>

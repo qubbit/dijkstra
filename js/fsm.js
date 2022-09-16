@@ -680,6 +680,11 @@ var currentLink = null; // a Link
 var movingObject = false;
 var originalClick;
 
+function clearGraph() {
+  links = [];
+  nodes = [];
+}
+
 function drawUsing(c) {
   c.clearRect(0, 0, canvas.width, canvas.height);
   c.save();
@@ -940,7 +945,12 @@ function crossBrowserRelativeMousePos(e) {
 function output(text) {
   var element = document.getElementById('output');
   element.style.display = 'block';
-  element.value = text;
+  element.innerText = text;
+}
+
+function debugBase64(base64URL){
+    var win = window.open();
+    win.document.write('<iframe src="' + base64URL  + '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>');
 }
 
 function saveAsPNG() {
@@ -949,7 +959,7 @@ function saveAsPNG() {
   drawUsing(canvas.getContext('2d'));
   selectedObject = oldSelectedObject;
   var pngData = canvas.toDataURL('image/png');
-  document.location.href = pngData;
+  debugBase64(pngData);
 }
 
 function saveAsSVG() {
