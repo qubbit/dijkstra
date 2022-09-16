@@ -1,313 +1,293 @@
-function init() {
+class Graph {
+  #Vertices;
+  #Edges;
 
-  "use strict";
-
-  window.Graph = function(V, E) {
+  constructor(V, E) {
     this.Vertices = V || nodes;
     this.Edges = E || links;
     this.dist = [];
     this.pred = [];
   }
 
-  Graph.prototype = {
+  reset() {
+    if (!this.Vertices || !this.Edges) {
+      return false;
+    }
 
-    constructor: Graph,
+    this.Vertices.forEach((v) => {
+      v.visited = false;
+    });
 
-    sanitize: function() {
+    this.dist = [];
+    this.pred = [];
 
-      if (!this.Vertices || !this.Edges) {
-        return false;
+    return true;
+  }
+
+  getSourceVertex() {
+    for (const i in this.Vertices) {
+      if (this.Vertices[i].isSourceNode) {
+        return this.Vertices[i];
       }
+    }
 
-      $.each(this.Vertices, function(k, v) {
-        v.visited = false;
-      });
+    return null;
+  }
 
-      this.dist = [];
-      this.pred = [];
+  getMinVertex() {
+    let minVertex = this.dist ? this.dist[0].v : null;
+    let minDistance = Infinity;
 
-      return true;
-    },
+    for (const i in this.dist) {
+      const elem = this.dist[i];
 
-    getSourceVertex: function() {
-
-      for (var i in this.Vertices) {
-        if (this.Vertices[i].isSourceNode) {
-          return this.Vertices[i];
-        }
+      if (elem.d < minDistance && !elem.v.visited) {
+        minVertex = elem.v;
+        minDistance = elem.d;
       }
+    }
 
-      return null;
-    },
+    return minVertex;
+  }
 
-    getMinVertex: function() {
+  getDistanceFromSource(u) {
+    for (const i in this.dist) {
+      const elem = this.dist[i];
 
-      var minVertex = (this.dist) ? this.dist[0].v : null;
-      var minDistance = Infinity;
-
-      for (var i in this.dist) {
-
-        var elem = this.dist[i];
-
-        if (elem.d < minDistance && !elem.v.visited) {
-          minVertex = elem.v;
-          minDistance = elem.d;
-        }
+      if (elem.v == u) {
+        return elem.d;
       }
+    }
+  }
 
-      return minVertex;
-    },
+  getVertexIndex(table, u) {
+    for (const i in table) {
+      const elem = this.dist[i];
 
-    getDistanceFromSource: function(u) {
-
-      for (var i in this.dist) {
-
-        var elem = this.dist[i];
-
-        if (elem.v == u) {
-          return elem.d;
-        }
+      if (elem.v == u) {
+        return i;
       }
-    },
+    }
+  }
 
-    getVertexIndex: function(table, u) {
-
-      for (var i in table) {
-
-        var elem = this.dist[i];
-
-        if (elem.v == u) {
-          return i;
-        }
+  getInQIndex(Q, u) {
+    for (const i in Q) {
+      if (Q[i].text == u.text) {
+        return i;
       }
-    },
+    }
+  }
 
-    getInQIndex: function(Q, u) {
+  getNeighbors(u) {
+    const edges = this.Edges;
+    const neighbors = [];
 
-      for (var i in Q) {
-        if (Q[i].text == u.text) {
-          return i;
-        }
+    for (const i in edges) {
+      const edge = edges[i];
+      if (edge.nodeA == u) {
+        neighbors.push(edge.nodeB);
       }
-    },
+    }
 
-    getNeighbors: function(u) {
+    return neighbors;
+  }
 
-      var edges = this.Edges;
-      var neighbors = [];
+  getDistanceBetween(u, v) {
+    const edges = this.Edges;
 
-      for (var i in edges) {
-        var edge = edges[i];
-        if (edge.nodeA == u) {
-          neighbors.push(edge.nodeB);
-        }
+    for (const i in edges) {
+      const edge = edges[i];
+      if (edge.nodeA == u && edge.nodeB == v) {
+        return +edge.text;
       }
+    }
 
-      return neighbors;
-    },
+    return Infinity;
+  }
 
-    getDistanceBetween: function(u, v) {
+  computeShortestPath() {
+    const source = this.getSourceVertex();
 
-      var edges = this.Edges;
+    // Initialize SSSP
+    const vertices = this.Vertices;
 
-      for (var i in edges) {
-        var edge = edges[i];
-        if (edge.nodeA == u && edge.nodeB == v) {
-          return +edge.text;
-        }
-      }
-
-      return Infinity;
-    },
-
-    computeShortestPath: function() {
-
-      var source = this.getSourceVertex();
-
-      // Initialize SSSP
-      var vertices = this.Vertices;
-
-      for (var i in vertices) {
-
-        var vertex = vertices[i];
-        if (vertex != source) {
-          this.dist.push({
-            v: vertex,
-            d: Infinity
-          });
-        }
-
-        this.pred.push({
+    for (const i in vertices) {
+      const vertex = vertices[i];
+      if (vertex != source) {
+        this.dist.push({
           v: vertex,
-          p: undefined
+          d: Infinity,
         });
       }
 
-      this.dist.push({
-        v: source,
-        d: 0
+      this.pred.push({
+        v: vertex,
+        p: undefined,
       });
-
-      var Q = deepClone(vertices);
-
-      while (Q.length > 0) {
-
-        var u = this.getMinVertex(this.dist);
-        u.visited = true;
-
-        // Remove u from Q
-        var index = this.getInQIndex(Q, u);
-        Q.splice(index, 1);
-
-
-        if (this.getDistanceFromSource(u) == Infinity) {
-          break;
-        }
-
-        var neighbors = this.getNeighbors(u);
-
-        for (var i in neighbors) {
-
-          // Relax
-          var v = neighbors[i];
-          var alt = this.getDistanceFromSource(u) + this.getDistanceBetween(u, v);
-          if (alt < this.getDistanceFromSource(v)) {
-
-            var di = this.getVertexIndex(this.dist, v);
-            var pi = this.getVertexIndex(this.pred, v);
-
-            this.dist[di] = {
-              v: v,
-              d: alt
-            };
-
-            this.pred[pi] = {
-              v: v,
-              p: u
-            };
-          }
-        }
-      }
-    },
-
-    drawPath: function(ctx) {
-
-      var links = [];
-      var e = this.Edges;
-      var pred = this.pred;
-
-      // ctx.canvas.height = ctx.canvas.height;
-
-      ctx.save();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      ctx.translate(0.5, 0.5);
-
-
-      for (var i in e) {
-        for (var j in pred) {
-          if (e[i].nodeA == pred[j].p && e[i].nodeB == pred[j].v) {
-            links.push(e[i])
-          }
-        }
-      }
-
-      var color = "#33a51c";
-
-      for (var k in links) {
-
-        links[k].nodeA.draw(ctx, color);
-        links[k].nodeB.draw(ctx, color);
-        links[k].draw(ctx, color);
-      }
-
-      ctx.restore();
     }
-  };
 
-  $("#computeShortestPath").on("click", function() {
+    this.dist.push({
+      v: source,
+      d: 0,
+    });
 
-    var g = new Graph();
+    const Q = deepClone(vertices);
 
-    if (g.sanitize()) {
+    while (Q.length > 0) {
+      const u = this.getMinVertex(this.dist);
+      u.visited = true;
 
+      // Remove u from Q
+      const index = this.getInQIndex(Q, u);
+      Q.splice(index, 1);
+
+      if (this.getDistanceFromSource(u) == Infinity) {
+        break;
+      }
+
+      const neighbors = this.getNeighbors(u);
+
+      for (const i in neighbors) {
+        // Relax
+        const v = neighbors[i];
+        const alt =
+          this.getDistanceFromSource(u) + this.getDistanceBetween(u, v);
+        if (alt < this.getDistanceFromSource(v)) {
+          const di = this.getVertexIndex(this.dist, v);
+          const pi = this.getVertexIndex(this.pred, v);
+
+          this.dist[di] = {
+            v: v,
+            d: alt,
+          };
+
+          this.pred[pi] = {
+            v: v,
+            p: u,
+          };
+        }
+      }
+    }
+  }
+
+  drawPath(ctx) {
+    const links = [];
+    const e = this.Edges;
+    const pred = this.pred;
+
+    // ctx.canvas.height = ctx.canvas.height;
+
+    ctx.save();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.translate(0.5, 0.5);
+
+    for (const i in e) {
+      for (const j in pred) {
+        if (e[i].nodeA == pred[j].p && e[i].nodeB == pred[j].v) {
+          links.push(e[i]);
+        }
+      }
+    }
+
+    const color = '#33a51c';
+
+    for (const k in links) {
+      links[k].nodeA.draw(ctx, color);
+      links[k].nodeB.draw(ctx, color);
+      links[k].draw(ctx, color);
+    }
+
+    ctx.restore();
+  }
+}
+
+function init() {
+  $.on('#computeShortestPath', 'click', () => {
+    const g = new Graph();
+
+    if (g.reset()) {
       g.computeShortestPath();
 
-      var resultElem = $("#result");
+      const resultElem = $.select('#result');
 
-      resultElem.html("");
+      resultElem.innerHTML = '';
 
-      var pathElem = $("<h3>", {
-        text: "Path: "
+      const pathElem = $.create('h3', {
+        text: 'Path: ',
       });
 
-      var k;
+      let k;
 
-      var pred = g.pred;
+      const pred = g.pred;
 
       if (pred.length > 1) {
-
         for (k = 0; k < pred.length - 2; k++) {
-
-          var p = g.pred[k].p;
-          var v = g.pred[k].v;
+          const p = g.pred[k].p;
+          const v = g.pred[k].v;
 
           if (p && v) {
-            pathElem.append(g.pred[k].p.text + " " + g.pred[k].v.text + " &rarr; ");
+            pathElem.append(
+              g.pred[k].p.text + ' ' + g.pred[k].v.text + ' → '
+            );
           }
         }
 
-        pathElem.append(g.pred[k].p.text + " " + g.pred[k].v.text);
-
+        pathElem.append(g.pred[k].p.text + ' ' + g.pred[k].v.text);
       }
 
       resultElem.append(pathElem);
 
-      var dValues = $("<table>", {
-        class: "table table-striped"
+      const dValues = $.create('table', {
+        class: 'content-table',
       });
-      dValues.append($("<thead>", {
-        html: '<tr><th>Vertex</th><th>Distance From Source</th></tr>'
-      }));
+      dValues.append(
+        $.create('thead', {
+          html: '<tr><th>Vertex</th><th>Distance from source</th></tr>',
+        })
+      );
 
-      for (var i in g.dist) {
-        var row = $("<tr>");
-        var vertexLabelCell = $("<td>", {
-          text: g.dist[i].v.text
+      const tableBody = $.create('tbody');
+
+      for (const i in g.dist) {
+        const row = $.create('tr');
+        const vertexLabelCell = $.create('td', {
+          text: g.dist[i].v.text,
         });
-        var dValueCell = $("<td>", {
-          text: g.dist[i].d
+        const dValueCell = $.create('td', {
+          text: g.dist[i].d,
         });
-        row.append(vertexLabelCell).append(dValueCell);
-        dValues.append(row);
+        row.append(vertexLabelCell);
+        row.append(dValueCell);
+        tableBody.append(row);
       }
 
-      var ctx = $("#canvas")[0].getContext("2d");
+      dValues.append(tableBody);
+      const ctx = $.select('#canvas').getContext('2d');
       g.drawPath(ctx);
 
-      resultElem.fadeIn().append(dValues);
+      resultElem.append(dValues);
     }
   });
 
-  $("#presetSelector").on("change", function() {
-
-    var preset = $(this).val();
-
+  $.on('#presetSelector', 'change', async (e) => {
+    const preset = e.target.value;
+    localStorage['fsm'] = '';
+    clearGraph();
+    fixCanvas();
     if (preset) {
-      $.get('presets/'+preset, function(data) {
-        localStorage["fsm"] = data;
-        restoreBackup();
-        location.reload();
-      }, "text");
+      const data = await $.get('presets/' + preset);
+      localStorage['fsm'] = data;
+      restoreBackup();
+      draw();
     }
   });
 
-  $("#clearCanvas").on("click", function() {
-    localStorage["fsm"] = null;
-    location.reload();
+  $.on('#clearCanvas', 'click', () => {
+    localStorage['fsm'] = '';
+    clearGraph();
+    draw();
   });
-
 }
-
 
 window.onload = init();
