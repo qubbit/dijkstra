@@ -219,7 +219,9 @@ textarea {
   color: var(--cadet);
 }
 
-.code:empty { display: none; }
+.code:empty {
+  display: none;
+}
 
 .code {
   padding: 1rem;

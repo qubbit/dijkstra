@@ -227,9 +227,7 @@ function init() {
           const v = g.pred[k].v;
 
           if (p && v) {
-            pathElem.append(
-              g.pred[k].p.text + ' ' + g.pred[k].v.text + ' → '
-            );
+            pathElem.append(g.pred[k].p.text + ' ' + g.pred[k].v.text + ' → ');
           }
         }
 
