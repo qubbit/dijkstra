@@ -1,85 +1,212 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
   <head>
-    <title>Dijkstra's Algorithm Solver</title>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dijkstra — Shortest Path Visualizer</title>
+    <meta
+      name="description"
+      content="An interactive, step-by-step visualizer for Dijkstra's shortest-path algorithm. Draw a directed weighted graph and watch the frontier expand, edge by edge."
+    />
     <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;700&family=Sora:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="css/style.css" />
   </head>
-  <body class="container">
-    <div class="dg">
-      <h1 class="main-title">Dijkstra's Algorithm Solver</h1>
-    </div>
-    <div class="df jc gap-2">
-      <canvas id="canvas" width="800" height="600">
-        <span class="error"
-          >Your browser does not support<br />the HTML5 &lt;canvas&gt;
-          element</span
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header>
+      <a class="logo" href="/" aria-label="Dijkstra visualizer home">
+        <svg
+          class="logo-mark"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
         >
-      </canvas>
-      <div class="df flex-col ac">
-        <div class="box" id="toolbox">
-          <label for="presetSelector">Preset</label>
-          <select class="select form-control" id="presetSelector">
-            <option value="">-- Select --</option>
-            <option value="dag_clrs.json">DAG CLRS</option>
-            <option value="5vertices.json">5 Vertices</option>
-            <option value="8vertices.json">8 Vertices</option>
-          </select>
-          <button class="btn btn-primary" id="computeShortestPath">
-            Shortest Path
-          </button>
-          <button class="btn btn-primary" id="clearCanvas">Clear Canvas</button>
-          <p class="center">
-            Export : <a href="javascript:saveAsPNG()">PNG</a> |
-            <a href="javascript:saveAsSVG()">SVG</a> |
-            <a href="javascript:saveAsLaTeX()">LaTeX</a>
+          <circle cx="4" cy="12" r="2.2" />
+          <circle cx="19" cy="5" r="2.2" />
+          <circle cx="19" cy="19" r="2.2" />
+          <path d="M6 11 L17 6" />
+          <path d="M6 13 L17 18" fill="none" stroke-dasharray="2 2" />
+        </svg>
+        <span>Dijkstra</span>
+      </a>
+      <nav aria-label="Primary">
+        <a href="#stage">Canvas</a>
+        <a href="#instructions">Guide</a>
+        <a href="https://github.com/qubbit/dijkstra">Source</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-heading">
+        <div class="grid-overlay" aria-hidden="true"></div>
+        <div class="hero-content">
+          <span class="eyebrow">Graph Algorithms · Interactive</span>
+          <h1 id="hero-heading">
+            Shortest Path, <span class="accent">Step by Step</span>
+          </h1>
+          <p class="subhead">
+            Draw a directed, weighted graph — then watch Dijkstra's algorithm
+            settle each vertex, relax each edge, and light up the shortest-path
+            tree in real time.
           </p>
         </div>
-        <div class="box" id="result"></div>
-      </div>
-    </div>
-    <div class="row">
-      <pre class="code" id="output"></pre>
-      <h2 class="secondary-title">Instructions</h2>
-      <p>
-        The big white box above is the where you can draw vertices and edges.
-        Here's how to use it:
-      </p>
-      <ul>
-        <li><b>Add a vertex (node):</b> double-click on the canvas</li>
-        <li><b>Make source vertex:</b> double-click on an existing vertex</li>
-        <li>
-          <b>Add an edge:</b> shift-drag on the canvas from one vertex to
-          another
-        </li>
-        <li><b>Move something:</b> drag it around</li>
-        <li>
-          <b>Delete something:</b> click it and press the delete key (not the
-          backspace key)
-        </li>
-        <li>
-          <b>Type numeric subscript:</b> put an underscore before the number
-          (like "S_0")
-        </li>
-        <li>
-          <b>Type greek letter:</b> put a backslash before it (like "\beta")
-        </li>
-      </ul>
-    </div>
-    <div class="row">
-      <footer>
-        <p>
-          Created by Gopal Adhikari. Powered by FSM Designer by
-          <a href="http://madebyevan.com/fsm">Evan Wallace</a>
-        </p>
-        <p>
-          <a href="https://github.com/qubbit/dijkstra"
-            >Fork this project on GitHub</a
-          >
-        </p>
-      </footer>
-    </div>
+      </section>
+
+      <section class="stage" id="stage" aria-labelledby="stage-heading">
+        <h2 id="stage-heading" class="section-eyebrow">// Live Canvas</h2>
+        <div class="stage-grid">
+          <div class="canvas-frame">
+            <div class="frame-corner tl" aria-hidden="true"></div>
+            <div class="frame-corner tr" aria-hidden="true"></div>
+            <div class="frame-corner bl" aria-hidden="true"></div>
+            <div class="frame-corner br" aria-hidden="true"></div>
+            <span class="frame-tag" aria-hidden="true">GRAPH · VIEWPORT</span>
+            <canvas id="canvas" width="800" height="600">
+              <span class="error"
+                >Your browser does not support<br />the HTML5 &lt;canvas&gt;
+                element</span
+              >
+            </canvas>
+          </div>
+
+          <aside class="deck" aria-label="Controls">
+            <div class="panel" id="toolbox">
+              <div class="panel-title">Configure</div>
+              <label class="field" for="presetSelector">
+                <span class="field-label">Preset Graph</span>
+                <select class="select" id="presetSelector">
+                  <option value="">-- Select --</option>
+                  <option value="dag_clrs.json">DAG CLRS</option>
+                  <option value="5vertices.json">5 Vertices</option>
+                  <option value="8vertices.json">8 Vertices</option>
+                </select>
+              </label>
+              <div class="btn-row">
+                <button class="btn btn-primary" id="computeShortestPath">
+                  Run Dijkstra
+                </button>
+                <button class="btn btn-ghost" id="clearCanvas">Clear</button>
+              </div>
+              <p class="export">
+                Export
+                <a href="javascript:saveAsPNG()">PNG</a>
+                <a href="javascript:saveAsSVG()">SVG</a>
+                <a href="javascript:saveAsLaTeX()">LaTeX</a>
+              </p>
+            </div>
+
+            <div class="panel" id="player">
+              <div class="panel-title">Playback</div>
+              <div class="player-controls">
+                <button
+                  class="btn btn-icon"
+                  id="stepPrev"
+                  title="Previous step"
+                >
+                  ◀
+                </button>
+                <button class="btn btn-primary" id="playPause">▶ Play</button>
+                <button class="btn btn-icon" id="stepNext" title="Next step">
+                  ▶
+                </button>
+                <button
+                  class="btn btn-icon"
+                  id="stepReset"
+                  title="Back to start"
+                >
+                  ⟲
+                </button>
+              </div>
+              <label class="field" for="speed">
+                <span class="field-label">Speed</span>
+                <input
+                  type="range"
+                  id="speed"
+                  min="1"
+                  max="10"
+                  value="6"
+                  step="1"
+                />
+              </label>
+              <div id="narration"></div>
+              <ul class="legend" aria-label="Color legend">
+                <li><span class="swatch current"></span>current</li>
+                <li><span class="swatch visited"></span>finalized</li>
+                <li><span class="swatch frontier"></span>unvisited</li>
+                <li><span class="swatch relax"></span>relaxing / tree</li>
+              </ul>
+            </div>
+
+            <div class="panel panel-result" id="result"></div>
+          </aside>
+        </div>
+        <pre class="code" id="output"></pre>
+      </section>
+
+      <section
+        class="instructions"
+        id="instructions"
+        aria-labelledby="guide-heading"
+      >
+        <div class="instructions-inner">
+          <span class="section-eyebrow">// Field Manual</span>
+          <h2 id="guide-heading">Draw your own graph</h2>
+          <p class="guide-lede">
+            The viewport above is a live sketchpad. Build a graph directly, or
+            load a preset and press <strong>Run Dijkstra</strong>.
+          </p>
+          <ul class="guide-list">
+            <li>
+              <span class="k">Add a vertex</span> double-click empty canvas
+            </li>
+            <li>
+              <span class="k">Set the source</span> double-click an existing
+              vertex
+            </li>
+            <li>
+              <span class="k">Add an edge</span> shift-drag from one vertex to
+              another
+            </li>
+            <li><span class="k">Move something</span> drag it around</li>
+            <li>
+              <span class="k">Delete something</span> click it, then press the
+              Delete key (not Backspace)
+            </li>
+            <li>
+              <span class="k">Numeric subscript</span> put an underscore before
+              the number (like "S_0")
+            </li>
+            <li>
+              <span class="k">Greek letter</span> put a backslash before it
+              (like "\beta")
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>&copy; 2026 Gopal Adhikari</span>
+      <span
+        >Canvas engine ·
+        <a href="https://madebyevan.com/fsm">FSM Designer</a></span
+      >
+      <span
+        ><a href="https://github.com/qubbit/dijkstra">Fork on GitHub</a></span
+      >
+    </footer>
+
     <script type="text/javascript" src="js/utils.js"></script>
     <script type="text/javascript" src="js/dijkstra.js"></script>
     <script type="text/javascript" src="js/fsm.js"></script>
