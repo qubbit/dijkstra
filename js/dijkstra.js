@@ -599,6 +599,21 @@ function updateControls() {
 // Wiring
 // ---------------------------------------------------------------------------
 
+// A fingerprint of everything the algorithm's result depends on: the source,
+// and every edge's endpoints and weight. If this changes, a previously computed
+// visualization is stale and must be recomputed.
+function graphSignature() {
+  const source = nodes.find((n) => n.isSourceNode);
+  const srcPart = source ? nodes.indexOf(source) : -1;
+  const edgePart = links
+    .map(
+      (e) =>
+        nodes.indexOf(e.nodeA) + '>' + nodes.indexOf(e.nodeB) + ':' + e.text
+    )
+    .join('|');
+  return srcPart + '#' + nodes.length + '#' + edgePart;
+}
+
 function runVisualization() {
   const g = new Graph();
 
@@ -611,14 +626,27 @@ function runVisualization() {
 
   g.computeShortestPath();
   viz = new Visualizer(g);
+  viz.signature = graphSignature();
   viz.reset();
   updateControls();
+}
+
+// Rebuild the visualization if the graph changed since it was computed (an edge
+// weight edited, an edge/vertex added or removed, the source moved). Returns the
+// current visualizer, or null if there's still no valid graph to run.
+function ensureFresh() {
+  if (viz && viz.signature === graphSignature()) {
+    return viz;
+  }
+  runVisualization();
+  return viz;
 }
 
 // Trace and highlight the shortest path to a given target vertex. Advances the
 // visualizer to the final frame first, since paths are only defined there.
 function selectPathTarget(target) {
-  if (!viz) return;
+  // Ignore path clicks against a stale run — the distances/tree would be wrong.
+  if (!viz || viz.signature !== graphSignature()) return;
   if (!viz.atComplete) {
     viz.index = viz.steps.length - 1;
   }
@@ -651,7 +679,9 @@ function init() {
   // the run is complete, so we don't interfere with drawing/editing the graph.
   // Uses addEventListener so it composes with fsm.js's own mouse handlers.
   $.select('#canvas').addEventListener('click', (e) => {
-    if (!viz || !viz.atComplete) return;
+    // Only trace paths against an up-to-date, completed run — never a stale one
+    // (e.g. after an edge weight was edited but not recomputed).
+    if (!viz || !viz.atComplete || viz.signature !== graphSignature()) return;
     const target = vertexAtCanvasPoint(e.clientX, e.clientY);
     if (target) {
       selectPathTarget(target);
@@ -661,14 +691,12 @@ function init() {
   });
 
   $.on('#playPause', 'click', () => {
-    if (!viz) runVisualization();
-    if (!viz) return;
+    if (!ensureFresh()) return;
     viz.playing ? viz.pause() : viz.play();
   });
 
   $.on('#stepNext', 'click', () => {
-    if (!viz) runVisualization();
-    if (viz) viz.next();
+    if (ensureFresh()) viz.next();
   });
 
   $.on('#stepPrev', 'click', () => {
@@ -680,8 +708,7 @@ function init() {
   });
 
   $.on('#runToEnd', 'click', () => {
-    if (!viz) runVisualization();
-    if (viz) viz.runToEnd();
+    if (ensureFresh()) viz.runToEnd();
   });
 
   // Export buttons — these download the graph as a file (see fsm.js).
