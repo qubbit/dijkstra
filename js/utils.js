@@ -71,13 +71,17 @@ function deepClone(o) {
 
 function setupCanvas(canvas) {
   var pixelRatio = window.devicePixelRatio || 1;
+  // Let CSS (width:100%) own the display size — clear any previously pinned
+  // inline size first so we measure the true, container-filled dimensions.
+  canvas.style.width = '';
+  canvas.style.height = '';
   var rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * pixelRatio;
-  canvas.height = rect.height * pixelRatio;
+  // Match the drawing buffer to the rendered size × devicePixelRatio so the
+  // graph stays crisp and fills the container without being stretched.
+  canvas.width = Math.round(rect.width * pixelRatio);
+  canvas.height = Math.round(rect.height * pixelRatio);
   var ctx = canvas.getContext('2d');
   ctx.scale(pixelRatio, pixelRatio);
-  canvas.style.width = rect.width + 'px';
-  canvas.style.height = rect.height + 'px';
   return ctx;
 }
 

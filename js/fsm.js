@@ -140,8 +140,11 @@ Link.prototype.draw = function (c, color) {
     c.moveTo(stuff.startX, stuff.startY);
     c.lineTo(stuff.endX, stuff.endY);
   }
-  c.strokeWidth = '2px';
-  c.strokeStyle = color;
+  // Only override the color the caller (drawUsing) already set when an explicit
+  // color is passed — otherwise export/editor rendering would get `undefined`.
+  if (color) {
+    c.strokeStyle = color;
+  }
   c.stroke();
   // draw the head of the arrow
   if (stuff.hasCircle) {
@@ -157,7 +160,8 @@ Link.prototype.draw = function (c, color) {
       c,
       stuff.endX,
       stuff.endY,
-      Math.atan2(stuff.endY - stuff.startY, stuff.endX - stuff.startX, color)
+      Math.atan2(stuff.endY - stuff.startY, stuff.endX - stuff.startX),
+      color
     );
   }
   // draw the text
@@ -249,8 +253,10 @@ Node.prototype.draw = function (c, color) {
   // draw the circle
   c.beginPath();
   c.arc(this.x, this.y, nodeRadius, 0, 2 * Math.PI, false);
-  c.strokeWidth = '2px';
-  c.strokeStyle = color;
+  // Keep the caller-set strokeStyle when no explicit color is given (export path).
+  if (color) {
+    c.strokeStyle = color;
+  }
   c.stroke();
   // draw the text
   drawText(c, this.text, this.x, this.y, null, selectedObject == this);
@@ -467,11 +473,47 @@ function ExportAsLaTeX() {
   this._points = [];
   this._texData = '';
   this._scale = 0.1; // to convert pixels to document space (TikZ breaks if the numbers get too big, above 500?)
+  this._colors = {}; // hex -> generated color name, emitted via \definecolor
+
+  // Return a TikZ-usable color for `style`. Named colors (e.g. "black") pass
+  // through. Hex colors ("#rrggbb") get registered as a \definecolor in the
+  // preamble and referenced by a generated name — the inline "{rgb,255:...}"
+  // form is NOT valid inside a bare \draw[...] and breaks pgfkeys.
+  this.texColor = function (style) {
+    if (typeof style === 'string' && style.charAt(0) === '#') {
+      var hex = style.slice(1);
+      if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+      }
+      hex = hex.toLowerCase();
+      if (!this._colors[hex]) {
+        this._colors[hex] = 'graphcolor' + hex;
+      }
+      return this._colors[hex];
+    }
+    return style;
+  };
+
+  // \definecolor lines for every hex color used, for the preamble.
+  this.colorDefinitions = function () {
+    var out = '';
+    for (var hex in this._colors) {
+      out +=
+        '\\definecolor{' +
+        this._colors[hex] +
+        '}{HTML}{' +
+        hex.toUpperCase() +
+        '}\n';
+    }
+    return out;
+  };
 
   this.toLaTeX = function () {
     return (
       '\\documentclass[12pt]{article}\n' +
       '\\usepackage{tikz}\n' +
+      '\\usepackage{xcolor}\n' +
+      this.colorDefinitions() +
       '\n' +
       '\\begin{document}\n' +
       '\n' +
@@ -496,7 +538,7 @@ function ExportAsLaTeX() {
     if (endAngle - startAngle == Math.PI * 2) {
       this._texData +=
         '\\draw [' +
-        this.strokeStyle +
+        this.texColor(this.strokeStyle) +
         '] (' +
         fixed(x, 3) +
         ',' +
@@ -525,7 +567,7 @@ function ExportAsLaTeX() {
       endAngle = -endAngle;
       this._texData +=
         '\\draw [' +
-        this.strokeStyle +
+        this.texColor(this.strokeStyle) +
         '] (' +
         fixed(x + radius * Math.cos(startAngle), 3) +
         ',' +
@@ -546,7 +588,7 @@ function ExportAsLaTeX() {
   };
   this.stroke = function () {
     if (this._points.length == 0) return;
-    this._texData += '\\draw [' + this.strokeStyle + ']';
+    this._texData += '\\draw [' + this.texColor(this.strokeStyle) + ']';
     for (var i = 0; i < this._points.length; i++) {
       var p = this._points[i];
       this._texData +=
@@ -561,7 +603,7 @@ function ExportAsLaTeX() {
   };
   this.fill = function () {
     if (this._points.length == 0) return;
-    this._texData += '\\fill [' + this.strokeStyle + ']';
+    this._texData += '\\fill [' + this.texColor(this.strokeStyle) + ']';
     for (var i = 0; i < this._points.length; i++) {
       var p = this._points[i];
       this._texData +=
@@ -838,7 +880,10 @@ function drawArrow(c, x, y, angle, color) {
   c.moveTo(x, y);
   c.lineTo(x - 8 * dx + 5 * dy, y - 8 * dy - 5 * dx);
   c.lineTo(x - 8 * dx - 5 * dy, y - 8 * dy + 5 * dx);
-  c.fillStyle = color;
+  // Keep the caller-set fillStyle when no explicit color is given (export path).
+  if (color) {
+    c.fillStyle = color;
+  }
   c.fill();
 }
 
@@ -1210,50 +1255,57 @@ function crossBrowserRelativeMousePos(e) {
   };
 }
 
-function output(text) {
-  var element = document.getElementById('output');
-  element.style.display = 'block';
-  element.innerText = text;
+// Trigger a browser download of `href` (a data: or blob: URL) as `filename`.
+function downloadURL(href, filename) {
+  var a = document.createElement('a');
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
-function debugBase64(base64URL) {
-  var win = window.open();
-  win.document.write(
-    '<iframe src="' +
-      base64URL +
-      '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>'
-  );
+// Download text content as a file with the given MIME type.
+function downloadText(text, filename, mime) {
+  var blob = new Blob([text], { type: mime });
+  var url = URL.createObjectURL(blob);
+  downloadURL(url, filename);
+  // Revoke on the next tick so the download has time to start.
+  setTimeout(function () {
+    URL.revokeObjectURL(url);
+  }, 1000);
 }
 
 function saveAsPNG() {
   var oldSelectedObject = selectedObject;
   selectedObject = null;
-  drawUsing(canvas.getContext('2d'));
+  drawGraphForExport(canvas.getContext('2d'));
   selectedObject = oldSelectedObject;
   var pngData = canvas.toDataURL('image/png');
-  debugBase64(pngData);
+  downloadURL(pngData, 'graph.png');
+  // Repaint the live canvas so the selection highlight / current view returns.
+  if (typeof viz !== 'undefined' && viz) viz.render();
+  else draw();
 }
 
 function saveAsSVG() {
   var exporter = new ExportAsSVG();
   var oldSelectedObject = selectedObject;
   selectedObject = null;
-  drawUsing(exporter);
+  drawGraphForExport(exporter);
   selectedObject = oldSelectedObject;
   var svgData = exporter.toSVG();
-  output(svgData);
-  // Chrome isn't ready for this yet, the 'Save As' menu item is disabled
-  // document.location.href = 'data:image/svg+xml;base64,' + btoa(svgData);
+  downloadText(svgData, 'graph.svg', 'image/svg+xml');
 }
 
 function saveAsLaTeX() {
   var exporter = new ExportAsLaTeX();
   var oldSelectedObject = selectedObject;
   selectedObject = null;
-  drawUsing(exporter);
+  drawGraphForExport(exporter);
   selectedObject = oldSelectedObject;
   var texData = exporter.toLaTeX();
-  output(texData);
+  downloadText(texData, 'graph.tex', 'text/plain');
 }
 
 function det(a, b, c, d, e, f, g, h, i) {

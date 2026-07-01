@@ -42,7 +42,6 @@
       </a>
       <nav aria-label="Primary">
         <a href="#stage">Canvas</a>
-        <a href="#instructions">Guide</a>
         <a href="https://github.com/qubbit/dijkstra">Source</a>
       </nav>
     </header>
@@ -64,20 +63,47 @@
       </section>
 
       <section class="stage" id="stage" aria-labelledby="stage-heading">
-        <h2 id="stage-heading" class="section-eyebrow">// Live Canvas</h2>
+        <div class="stage-head">
+          <h2 id="stage-heading" class="section-eyebrow">// Live Canvas</h2>
+          <a
+            class="info-btn"
+            href="#guide-modal"
+            aria-label="Open the field manual"
+            title="How to use — field manual"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 11 L12 16" />
+              <path d="M12 8 L12 8.01" />
+            </svg>
+          </a>
+        </div>
         <div class="stage-grid">
-          <div class="canvas-frame">
-            <div class="frame-corner tl" aria-hidden="true"></div>
-            <div class="frame-corner tr" aria-hidden="true"></div>
-            <div class="frame-corner bl" aria-hidden="true"></div>
-            <div class="frame-corner br" aria-hidden="true"></div>
-            <span class="frame-tag" aria-hidden="true">GRAPH · VIEWPORT</span>
-            <canvas id="canvas" width="800" height="600">
-              <span class="error"
-                >Your browser does not support<br />the HTML5 &lt;canvas&gt;
-                element</span
-              >
-            </canvas>
+          <div class="stage-main">
+            <div class="canvas-frame">
+              <div class="frame-corner tl" aria-hidden="true"></div>
+              <div class="frame-corner tr" aria-hidden="true"></div>
+              <div class="frame-corner bl" aria-hidden="true"></div>
+              <div class="frame-corner br" aria-hidden="true"></div>
+              <span class="frame-tag" aria-hidden="true">GRAPH · VIEWPORT</span>
+              <canvas id="canvas" width="800" height="600">
+                <span class="error"
+                  >Your browser does not support<br />the HTML5 &lt;canvas&gt;
+                  element</span
+                >
+              </canvas>
+            </div>
+
+            <div class="panel panel-result" id="result"></div>
+            <div class="panel panel-path" id="pathResult"></div>
           </div>
 
           <aside class="deck" aria-label="Controls">
@@ -98,12 +124,14 @@
                 </button>
                 <button class="btn btn-ghost" id="clearCanvas">Clear</button>
               </div>
-              <p class="export">
-                Export
-                <a href="javascript:saveAsPNG()">PNG</a>
-                <a href="javascript:saveAsSVG()">SVG</a>
-                <a href="javascript:saveAsLaTeX()">LaTeX</a>
-              </p>
+              <div class="export">
+                <span class="export-label">Export as</span>
+                <div class="export-btns">
+                  <button class="btn btn-export" id="exportPNG">PNG</button>
+                  <button class="btn btn-export" id="exportSVG">SVG</button>
+                  <button class="btn btn-export" id="exportLaTeX">LaTeX</button>
+                </div>
+              </div>
             </div>
 
             <div class="panel" id="player">
@@ -128,6 +156,9 @@
                   ⟲
                 </button>
               </div>
+              <button class="btn btn-ghost btn-full" id="runToEnd">
+                ⏭ Run to Completion
+              </button>
               <label class="field" for="speed">
                 <span class="field-label">Speed</span>
                 <input
@@ -147,54 +178,72 @@
                 <li><span class="swatch relax"></span>relaxing / tree</li>
               </ul>
             </div>
-
-            <div class="panel panel-result" id="result"></div>
           </aside>
-        </div>
-        <pre class="code" id="output"></pre>
-      </section>
-
-      <section
-        class="instructions"
-        id="instructions"
-        aria-labelledby="guide-heading"
-      >
-        <div class="instructions-inner">
-          <span class="section-eyebrow">// Field Manual</span>
-          <h2 id="guide-heading">Draw your own graph</h2>
-          <p class="guide-lede">
-            The viewport above is a live sketchpad. Build a graph directly, or
-            load a preset and press <strong>Run Dijkstra</strong>.
-          </p>
-          <ul class="guide-list">
-            <li>
-              <span class="k">Add a vertex</span> double-click empty canvas
-            </li>
-            <li>
-              <span class="k">Set the source</span> double-click an existing
-              vertex
-            </li>
-            <li>
-              <span class="k">Add an edge</span> shift-drag from one vertex to
-              another
-            </li>
-            <li><span class="k">Move something</span> drag it around</li>
-            <li>
-              <span class="k">Delete something</span> click it, then press the
-              Delete key (not Backspace)
-            </li>
-            <li>
-              <span class="k">Numeric subscript</span> put an underscore before
-              the number (like "S_0")
-            </li>
-            <li>
-              <span class="k">Greek letter</span> put a backslash before it
-              (like "\beta")
-            </li>
-          </ul>
         </div>
       </section>
     </main>
+
+    <div
+      id="guide-modal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="guide-heading"
+    >
+      <a
+        class="modal-backdrop"
+        href="#main"
+        aria-label="Close field manual"
+      ></a>
+      <div class="modal-panel">
+        <div class="modal-head">
+          <div>
+            <span class="section-eyebrow">// Field Manual</span>
+            <h2 id="guide-heading">Draw your own graph</h2>
+          </div>
+          <a
+            class="modal-close"
+            href="#main"
+            aria-label="Close field manual"
+            title="Close"
+          >
+            <span class="x" aria-hidden="true"></span>
+          </a>
+        </div>
+        <p class="guide-lede">
+          The viewport is a live sketchpad. Build a graph directly, or load a
+          preset and press <strong>Run Dijkstra</strong>.
+        </p>
+        <ul class="guide-list">
+          <li><span class="k">Add a vertex</span> double-click empty canvas</li>
+          <li>
+            <span class="k">Set the source</span> double-click an existing
+            vertex
+          </li>
+          <li>
+            <span class="k">Add an edge</span> shift-drag from one vertex to
+            another
+          </li>
+          <li><span class="k">Move something</span> drag it around</li>
+          <li>
+            <span class="k">Delete something</span> click it, then press the
+            Delete key (not Backspace)
+          </li>
+          <li>
+            <span class="k">Numeric subscript</span> put an underscore before
+            the number (like "S_0")
+          </li>
+          <li>
+            <span class="k">Greek letter</span> put a backslash before it (like
+            "\beta")
+          </li>
+          <li>
+            <span class="k">Trace a path</span> after running, click a vertex to
+            see its shortest path
+          </li>
+        </ul>
+      </div>
+    </div>
 
     <footer>
       <span>&copy; 2026 Gopal Adhikari</span>

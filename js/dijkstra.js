@@ -188,6 +188,42 @@ class Graph {
     }
     return treeEdges;
   }
+
+  // Reconstruct the shortest path from the source to `target` by walking the
+  // predecessor pointers backward, then reversing. This is what the `pred`
+  // output is *for* — dist tells you how far, pred tells you the route.
+  //
+  // Returns { reachable, vertices, edges, distance }:
+  //   reachable  — false if target has no path from the source (dist === ∞)
+  //   vertices   — ordered source → … → target
+  //   edges      — the Link objects connecting consecutive vertices
+  //   distance   — total path weight (this.dist.get(target))
+  shortestPathTo(target) {
+    const distance = this.distanceTo(target);
+    if (distance === Infinity) {
+      return { reachable: false, vertices: [], edges: [], distance };
+    }
+
+    const vertices = [];
+    let cur = target;
+    // Walk predecessors back to the source. `pred(source)` is undefined, so the
+    // loop naturally stops after pushing the source.
+    while (cur) {
+      vertices.push(cur);
+      cur = this.pred.get(cur);
+    }
+    vertices.reverse();
+
+    const edges = [];
+    for (let i = 0; i < vertices.length - 1; i++) {
+      const from = vertices[i];
+      const to = vertices[i + 1];
+      const edge = this.Edges.find((e) => e.nodeA === from && e.nodeB === to);
+      if (edge) edges.push(edge);
+    }
+
+    return { reachable: true, vertices, edges, distance };
+  }
 }
 
 function fmt(d) {
@@ -207,6 +243,7 @@ const COLORS = {
   frontier: '#7f8c8d', // muted grey — not yet finalized
   relax: '#12a06a', // green — edge under relaxation
   tree: '#12a06a', // green — final shortest-path tree
+  path: '#dd6e42', // burnt sienna — a specific source→target path
 };
 
 class Visualizer {
@@ -216,6 +253,32 @@ class Visualizer {
     this.index = 0;
     this.timer = null;
     this.speedMs = 900;
+    // A specific source→target path the user picked by clicking a vertex,
+    // highlighted on top of the final frame. Cleared while stepping.
+    this.highlightedPath = null;
+  }
+
+  get atComplete() {
+    return this.current && this.current.type === 'complete';
+  }
+
+  // Reconstruct and highlight the shortest path to `target` (a Node). Only
+  // meaningful once the algorithm has finished. Returns the path result so the
+  // caller can render its text, or null if not applicable.
+  showPathTo(target) {
+    if (!this.atComplete) return null;
+    const path = this.graph.shortestPathTo(target);
+    this.highlightedPath = path.reachable ? path : { ...path, target };
+    this.highlightedPath.target = target;
+    this.render();
+    return this.highlightedPath;
+  }
+
+  clearHighlightedPath() {
+    if (this.highlightedPath) {
+      this.highlightedPath = null;
+      this.render();
+    }
   }
 
   get current() {
@@ -263,6 +326,7 @@ class Visualizer {
   next() {
     if (this.index < this.steps.length - 1) {
       this.index++;
+      this.highlightedPath = null;
       this.render();
     }
     if (this.atEnd) this.pause();
@@ -272,6 +336,7 @@ class Visualizer {
     this.pause();
     if (this.index > 0) {
       this.index--;
+      this.highlightedPath = null;
       this.render();
     }
   }
@@ -279,47 +344,97 @@ class Visualizer {
   reset() {
     this.pause();
     this.index = 0;
+    this.highlightedPath = null;
     this.render();
+  }
+
+  // Jump straight to the final frame — the end result in one shot.
+  runToEnd() {
+    this.pause();
+    this.index = this.steps.length - 1;
+    this.highlightedPath = null;
+    this.render();
+  }
+
+  // Role-based color for an edge at the current step.
+  edgeColor(link, step) {
+    if (link === step.relaxedEdge) {
+      return step.improved ? COLORS.relax : COLORS.frontier;
+    }
+    if (step.type === 'complete' && this.isTreeEdge(link)) {
+      return COLORS.tree;
+    }
+    return COLORS.base;
+  }
+
+  // Role-based color for a vertex at the current step.
+  nodeColor(node, step, visited, frontier) {
+    if (node === step.current) return COLORS.current;
+    if (visited.has(node)) return COLORS.visited;
+    if (frontier.has(node)) return COLORS.frontier;
+    return COLORS.base;
+  }
+
+  // Render the colored graph for the current step into any 2D-context-like
+  // target — the live canvas, or an SVG/LaTeX/PNG exporter (so exports keep
+  // the algorithm's colors). The target must implement the canvas subset that
+  // Node/Link.draw use (beginPath, arc, moveTo, lineTo, stroke, fill, etc.).
+  drawGraphInto(ctx) {
+    const step = this.current;
+    const visited = new Set(step.visited);
+    const frontier = new Set(step.frontier);
+
+    // Edges first, so vertices sit on top.
+    for (const link of this.graph.Edges) {
+      const color = this.edgeColor(link, step);
+      ctx.fillStyle = ctx.strokeStyle = color;
+      link.draw(ctx, color);
+    }
+
+    for (const node of this.graph.Vertices) {
+      const color = this.nodeColor(node, step, visited, frontier);
+      ctx.fillStyle = ctx.strokeStyle = color;
+      node.draw(ctx, color);
+    }
+
+    // Overlay a user-selected source→target path on top of the final frame,
+    // drawn thicker so it stands out from the shortest-path tree beneath it.
+    const path = this.highlightedPath;
+    if (path && path.reachable) {
+      const prevWidth = ctx.lineWidth;
+      ctx.lineWidth = 3;
+      const pathEdges = new Set(path.edges);
+      for (const edge of this.graph.Edges) {
+        if (pathEdges.has(edge)) {
+          ctx.fillStyle = ctx.strokeStyle = COLORS.path;
+          edge.draw(ctx, COLORS.path);
+        }
+      }
+      for (const node of path.vertices) {
+        ctx.fillStyle = ctx.strokeStyle = COLORS.path;
+        node.draw(ctx, COLORS.path);
+      }
+      ctx.lineWidth = prevWidth;
+    }
   }
 
   // Draw the graph for the current step, coloring vertices and edges by role.
   render() {
-    const step = this.current;
     const ctx = $.select('#canvas').getContext('2d');
-
-    const visited = new Set(step.visited);
-    const frontier = new Set(step.frontier);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     ctx.translate(0.5, 0.5);
     ctx.lineWidth = 1;
 
-    // Edges first, so vertices sit on top.
-    for (const link of this.graph.Edges) {
-      let color = COLORS.base;
-      if (link === step.relaxedEdge) {
-        color = step.improved ? COLORS.relax : COLORS.frontier;
-      } else if (step.type === 'complete' && this.isTreeEdge(link)) {
-        color = COLORS.tree;
-      }
-      ctx.fillStyle = ctx.strokeStyle = color;
-      link.draw(ctx, color);
-    }
-
-    for (const node of this.graph.Vertices) {
-      let color = COLORS.base;
-      if (node === step.current) color = COLORS.current;
-      else if (visited.has(node)) color = COLORS.visited;
-      else if (frontier.has(node)) color = COLORS.frontier;
-      ctx.fillStyle = ctx.strokeStyle = color;
-      node.draw(ctx, color);
-    }
+    this.drawGraphInto(ctx);
 
     ctx.restore();
 
+    const step = this.current;
     renderNarration(step, this.index, this.steps.length);
-    renderDistanceTable(step);
+    renderDistanceTable(step, this.atComplete);
+    renderPathResult(this.highlightedPath, this.graph, this.atComplete);
   }
 
   isTreeEdge(edge) {
@@ -329,6 +444,25 @@ class Visualizer {
 
 // The single active visualizer (rebuilt each time "Shortest Path" is pressed).
 let viz = null;
+
+// Draw the graph into an export context (SVG/LaTeX exporter or a canvas ctx).
+// When a visualization is active, this preserves the algorithm's colors for the
+// current step; otherwise it falls back to fsm.js's plain black rendering.
+// Called from saveAsPNG/SVG/LaTeX in fsm.js.
+function drawGraphForExport(ctx) {
+  if (!viz) {
+    drawUsing(ctx);
+    return;
+  }
+  // Mirror drawUsing's context setup so exporters get the same coordinate
+  // transform, then draw with the visualizer's per-step colors.
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(0.5, 0.5);
+  ctx.lineWidth = 1;
+  viz.drawGraphInto(ctx);
+  ctx.restore();
+}
 
 // ---------------------------------------------------------------------------
 // Result / narration rendering
@@ -347,7 +481,7 @@ function renderNarration(step, index, total) {
   el.append($.create('p', { class: 'step-text', text: step.description }));
 }
 
-function renderDistanceTable(step) {
+function renderDistanceTable(step, complete) {
   const resultElem = $.select('#result');
   resultElem.innerHTML = '';
 
@@ -365,6 +499,22 @@ function renderDistanceTable(step) {
     const row = $.create('tr');
     if (vertex === step.current) row.className = 'active-row';
 
+    // Once the run is complete, each row is a shortcut to reveal that
+    // vertex's shortest path (same as clicking the vertex on the canvas).
+    if (complete) {
+      row.classList.add('clickable');
+      row.tabIndex = 0;
+      row.setAttribute('role', 'button');
+      row.setAttribute('aria-label', `Show shortest path to ${vertex.text}`);
+      row.addEventListener('click', () => selectPathTarget(vertex));
+      row.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectPathTarget(vertex);
+        }
+      });
+    }
+
     row.append($.create('td', { text: vertex.text || '·' }));
     row.append($.create('td', { text: fmt(d) }));
 
@@ -378,6 +528,63 @@ function renderDistanceTable(step) {
 
   table.append(tbody);
   resultElem.append(table);
+}
+
+// Render the "shortest path to X" panel below the table. Shows a prompt when
+// the run is complete but nothing is selected yet, the reconstructed path when
+// a target is picked, or nothing while the algorithm is still stepping.
+function renderPathResult(path, graph, complete) {
+  const el = $.select('#pathResult');
+  if (!el) return;
+  el.innerHTML = '';
+
+  if (!complete) {
+    return;
+  }
+
+  if (!path) {
+    el.append(
+      $.create('p', {
+        class: 'path-hint',
+        text: 'Click any vertex (on the canvas or in the table) to trace its shortest path from the source.',
+      })
+    );
+    return;
+  }
+
+  const source = graph.getSourceVertex();
+  el.append(
+    $.create('div', {
+      class: 'path-title',
+      text: `Path · ${source.text} → ${path.target.text}`,
+    })
+  );
+
+  if (!path.reachable) {
+    el.append(
+      $.create('p', {
+        class: 'path-none',
+        text: `${path.target.text} is unreachable from ${source.text} (distance ∞).`,
+      })
+    );
+    return;
+  }
+
+  const route = $.create('div', { class: 'path-route' });
+  path.vertices.forEach((v, i) => {
+    route.append($.create('span', { class: 'path-node', text: v.text }));
+    if (i < path.vertices.length - 1) {
+      route.append($.create('span', { class: 'path-arrow', text: '→' }));
+    }
+  });
+  el.append(route);
+
+  el.append(
+    $.create('div', {
+      class: 'path-distance',
+      html: `Total distance <strong>${path.distance}</strong>`,
+    })
+  );
 }
 
 // Reflect play/pause state on the toggle button and enable/disable steppers.
@@ -408,8 +615,50 @@ function runVisualization() {
   updateControls();
 }
 
+// Trace and highlight the shortest path to a given target vertex. Advances the
+// visualizer to the final frame first, since paths are only defined there.
+function selectPathTarget(target) {
+  if (!viz) return;
+  if (!viz.atComplete) {
+    viz.index = viz.steps.length - 1;
+  }
+  viz.showPathTo(target);
+}
+
+// Map a canvas click to graph coordinates and return the vertex under it, or
+// null. The drawing context is scaled to CSS pixels (see setupCanvas), so we
+// convert the client position into that same space before hit-testing.
+function vertexAtCanvasPoint(clientX, clientY) {
+  const cv = $.select('#canvas');
+  const rect = cv.getBoundingClientRect();
+  const scale = cv.width / (window.devicePixelRatio || 1) / rect.width;
+  const x = (clientX - rect.left) * scale;
+  const y = (clientY - rect.top) * scale;
+  for (const node of nodes) {
+    const dx = x - node.x;
+    const dy = y - node.y;
+    if (dx * dx + dy * dy <= nodeRadius * nodeRadius) {
+      return node;
+    }
+  }
+  return null;
+}
+
 function init() {
   $.on('#computeShortestPath', 'click', runVisualization);
+
+  // Click a vertex on the canvas to trace its shortest path — but only once
+  // the run is complete, so we don't interfere with drawing/editing the graph.
+  // Uses addEventListener so it composes with fsm.js's own mouse handlers.
+  $.select('#canvas').addEventListener('click', (e) => {
+    if (!viz || !viz.atComplete) return;
+    const target = vertexAtCanvasPoint(e.clientX, e.clientY);
+    if (target) {
+      selectPathTarget(target);
+    } else {
+      viz.clearHighlightedPath();
+    }
+  });
 
   $.on('#playPause', 'click', () => {
     if (!viz) runVisualization();
@@ -429,6 +678,16 @@ function init() {
   $.on('#stepReset', 'click', () => {
     if (viz) viz.reset();
   });
+
+  $.on('#runToEnd', 'click', () => {
+    if (!viz) runVisualization();
+    if (viz) viz.runToEnd();
+  });
+
+  // Export buttons — these download the graph as a file (see fsm.js).
+  $.on('#exportPNG', 'click', () => saveAsPNG());
+  $.on('#exportSVG', 'click', () => saveAsSVG());
+  $.on('#exportLaTeX', 'click', () => saveAsLaTeX());
 
   $.on('#speed', 'input', (e) => {
     // Slider is 1 (slow) .. 10 (fast); map to milliseconds per step.
@@ -466,6 +725,8 @@ function resetVisualizer() {
   if (resultElem) resultElem.innerHTML = '';
   const narration = $.select('#narration');
   if (narration) narration.innerHTML = '';
+  const pathResult = $.select('#pathResult');
+  if (pathResult) pathResult.innerHTML = '';
   updateControls();
 }
 
