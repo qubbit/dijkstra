@@ -63,29 +63,57 @@
       </section>
 
       <section class="stage" id="stage" aria-labelledby="stage-heading">
-        <div class="stage-head">
-          <h2 id="stage-heading" class="section-eyebrow">// Live Canvas</h2>
-          <a
-            class="info-btn"
-            href="#guide-modal"
-            aria-label="Open the field manual"
-            title="How to use — field manual"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
+        <div class="stage-toolbar">
+          <div class="stage-controls">
+            <label class="toolbar-preset" for="presetSelector">
+              <span class="sr-only">Preset graph</span>
+              <select class="select" id="presetSelector">
+                <option value="">Preset --</option>
+                <option value="dag_clrs.json">DAG CLRS</option>
+                <option value="5vertices.json">5 Vertices</option>
+                <option value="8vertices.json">8 Vertices</option>
+              </select>
+            </label>
+            <button class="btn btn-primary" id="computeShortestPath">
+              Run Dijkstra
+            </button>
+            <button class="btn btn-ghost" id="clearCanvas">Clear</button>
+          </div>
+
+          <div class="stage-tools">
+            <div class="export" role="group" aria-label="Export graph">
+              <span class="export-label">Export</span>
+              <div class="export-btns">
+                <button class="btn btn-export" id="exportPNG">PNG</button>
+                <button class="btn btn-export" id="exportSVG">SVG</button>
+                <button class="btn btn-export" id="exportLaTeX">LaTeX</button>
+              </div>
+            </div>
+            <a
+              class="info-btn"
+              href="#guide-modal"
+              aria-label="Open the field manual"
+              title="How to use — field manual"
             >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 11 L12 16" />
-              <path d="M12 8 L12 8.01" />
-            </svg>
-          </a>
+              <svg
+                class="ico"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4" />
+                <path d="M12 8h.01" />
+              </svg>
+            </a>
+          </div>
         </div>
+
+        <h2 id="stage-heading" class="section-eyebrow">// Live Canvas</h2>
         <div class="stage-grid">
           <div class="stage-main">
             <div class="canvas-frame">
@@ -107,31 +135,76 @@
           </div>
 
           <aside class="deck" aria-label="Controls">
-            <div class="panel" id="toolbox">
-              <div class="panel-title">Configure</div>
-              <label class="field" for="presetSelector">
-                <span class="field-label">Preset Graph</span>
-                <select class="select" id="presetSelector">
-                  <option value="">-- Select --</option>
-                  <option value="dag_clrs.json">DAG CLRS</option>
-                  <option value="5vertices.json">5 Vertices</option>
-                  <option value="8vertices.json">8 Vertices</option>
-                </select>
+            <div class="panel" id="graphEditor">
+              <div class="panel-title">Graph Editor</div>
+
+              <label class="field" for="vertexLabel">
+                <span class="field-label">Vertex</span>
+                <input
+                  class="text-input"
+                  type="text"
+                  id="vertexLabel"
+                  placeholder='e.g. "Kansas City"'
+                  autocomplete="off"
+                />
               </label>
               <div class="btn-row">
-                <button class="btn btn-primary" id="computeShortestPath">
-                  Run Dijkstra
+                <button class="btn btn-primary" id="addVertex">Add</button>
+                <button class="btn btn-ghost" id="removeVertex">Remove</button>
+                <button class="btn btn-ghost" id="setSource">Set Source</button>
+              </div>
+              <p
+                class="editor-error"
+                id="vertexError"
+                role="alert"
+                aria-live="polite"
+              ></p>
+
+              <div class="edge-fields">
+                <label class="field" for="edgeSrc">
+                  <span class="field-label">From</span>
+                  <input
+                    class="text-input"
+                    type="text"
+                    id="edgeSrc"
+                    placeholder="source"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="field" for="edgeDest">
+                  <span class="field-label">To</span>
+                  <input
+                    class="text-input"
+                    type="text"
+                    id="edgeDest"
+                    placeholder="dest"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="field" for="edgeWeight">
+                  <span class="field-label">Weight</span>
+                  <input
+                    class="text-input"
+                    type="number"
+                    id="edgeWeight"
+                    placeholder="0"
+                    inputmode="numeric"
+                    step="any"
+                  />
+                </label>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-primary" id="addEdge">Add Edge</button>
+                <button class="btn btn-ghost" id="removeEdge">
+                  Remove Edge
                 </button>
-                <button class="btn btn-ghost" id="clearCanvas">Clear</button>
               </div>
-              <div class="export">
-                <span class="export-label">Export as</span>
-                <div class="export-btns">
-                  <button class="btn btn-export" id="exportPNG">PNG</button>
-                  <button class="btn btn-export" id="exportSVG">SVG</button>
-                  <button class="btn btn-export" id="exportLaTeX">LaTeX</button>
-                </div>
-              </div>
+              <p
+                class="editor-error"
+                id="edgeError"
+                role="alert"
+                aria-live="polite"
+              ></p>
             </div>
 
             <div class="panel" id="player">
@@ -141,23 +214,101 @@
                   class="btn btn-icon"
                   id="stepPrev"
                   title="Previous step"
+                  aria-label="Previous step"
                 >
-                  ◀
+                  <svg
+                    class="ico"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
                 </button>
-                <button class="btn btn-primary" id="playPause">▶ Play</button>
-                <button class="btn btn-icon" id="stepNext" title="Next step">
-                  ▶
+                <button
+                  class="btn btn-primary"
+                  id="playPause"
+                  aria-label="Play"
+                >
+                  <svg
+                    class="ico"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"
+                    />
+                  </svg>
+                  <span class="btn-label">Play</span>
+                </button>
+                <button
+                  class="btn btn-icon"
+                  id="stepNext"
+                  title="Next step"
+                  aria-label="Next step"
+                >
+                  <svg
+                    class="ico"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
                 </button>
                 <button
                   class="btn btn-icon"
                   id="stepReset"
                   title="Back to start"
+                  aria-label="Back to start"
                 >
-                  ⟲
+                  <svg
+                    class="ico"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+                    />
+                    <path d="M3 3v5h5" />
+                  </svg>
                 </button>
               </div>
               <button class="btn btn-ghost btn-full" id="runToEnd">
-                ⏭ Run to Completion
+                <svg
+                  class="ico"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M21 4v16" />
+                  <path
+                    d="M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z"
+                  />
+                </svg>
+                <span class="btn-label">Run to Completion</span>
               </button>
               <label class="field" for="speed">
                 <span class="field-label">Speed</span>
@@ -207,7 +358,19 @@
             aria-label="Close field manual"
             title="Close"
           >
-            <span class="x" aria-hidden="true"></span>
+            <svg
+              class="ico"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
           </a>
         </div>
         <p class="guide-lede">
@@ -240,6 +403,10 @@
           <li>
             <span class="k">Trace a path</span> after running, click a vertex to
             see its shortest path
+          </li>
+          <li>
+            <span class="k">No mouse?</span> use the Graph Editor panel to add
+            or remove vertices and edges by name
           </li>
         </ul>
       </div>

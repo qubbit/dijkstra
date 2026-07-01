@@ -934,7 +934,17 @@ var caretVisible = true;
 
 function resetCaret() {
   clearInterval(caretTimer);
-  caretTimer = setInterval('caretVisible = !caretVisible; draw()', 500);
+  caretTimer = setInterval(function () {
+    caretVisible = !caretVisible;
+    // Repaint via the visualizer-aware hook so the blinking caret doesn't wipe
+    // the colored graph when a Dijkstra visualization is being shown. Falls
+    // back to the plain graph render when no visualization is active.
+    if (typeof repaintCanvas === 'function') {
+      repaintCanvas();
+    } else {
+      draw();
+    }
+  }, 500);
   caretVisible = true;
 }
 
@@ -1247,11 +1257,14 @@ function crossBrowserMousePos(e) {
 }
 
 function crossBrowserRelativeMousePos(e) {
-  var element = crossBrowserElementPos(e);
-  var mouse = crossBrowserMousePos(e);
+  e = e || window.event;
+  // Map the pointer from rendered CSS pixels into the fixed logical draw space
+  // (LOGICAL_W x LOGICAL_H), so double-click-add and shift-drag-add land in the
+  // right spot even when the canvas is scaled down on mobile.
+  var rect = canvas.getBoundingClientRect();
   return {
-    x: mouse.x - element.x,
-    y: mouse.y - element.y,
+    x: (e.clientX - rect.left) * (LOGICAL_W / rect.width),
+    y: (e.clientY - rect.top) * (LOGICAL_H / rect.height),
   };
 }
 

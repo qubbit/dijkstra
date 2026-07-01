@@ -1,5 +1,12 @@
 // Kinda like jQuery but cuter
 
+// Fixed logical drawing space for the canvas. Graph coordinates (nodes/edges,
+// presets) live in this 800x600 space regardless of the canvas's rendered size,
+// so the whole graph stays visible on any viewport — CSS scales the element
+// down responsively (see #canvas: width:100%; aspect-ratio:4/3). 4:3 matches.
+const LOGICAL_W = 800;
+const LOGICAL_H = 600;
+
 const creationAttributes = {
   class: 'className',
   text: 'innerText',
@@ -71,17 +78,20 @@ function deepClone(o) {
 
 function setupCanvas(canvas) {
   var pixelRatio = window.devicePixelRatio || 1;
-  // Let CSS (width:100%) own the display size — clear any previously pinned
-  // inline size first so we measure the true, container-filled dimensions.
+  // Let CSS (width:100%; aspect-ratio) own the on-screen size — clear any inline
+  // pixel size so the element scales responsively.
   canvas.style.width = '';
   canvas.style.height = '';
-  var rect = canvas.getBoundingClientRect();
-  // Match the drawing buffer to the rendered size × devicePixelRatio so the
-  // graph stays crisp and fills the container without being stretched.
-  canvas.width = Math.round(rect.width * pixelRatio);
-  canvas.height = Math.round(rect.height * pixelRatio);
+  // The drawing buffer is a FIXED logical space (LOGICAL_W x LOGICAL_H) times the
+  // device pixel ratio for crispness. Because the buffer no longer depends on the
+  // rendered width, the graph occupies the same coordinate space on every device
+  // and is never clipped on narrow screens.
+  canvas.width = Math.round(LOGICAL_W * pixelRatio);
+  canvas.height = Math.round(LOGICAL_H * pixelRatio);
   var ctx = canvas.getContext('2d');
-  ctx.scale(pixelRatio, pixelRatio);
+  // setTransform (not scale) so repeated fixCanvas() calls — e.g. on preset
+  // change — reset the transform instead of compounding it.
+  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   return ctx;
 }
 

@@ -587,12 +587,22 @@ function renderPathResult(path, graph, complete) {
   );
 }
 
-// Reflect play/pause state on the toggle button and enable/disable steppers.
+// Lucide icon path markup for the play/pause toggle.
+const PLAY_ICON =
+  '<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />';
+const PAUSE_ICON =
+  '<rect x="14" y="3" width="5" height="18" rx="1" /><rect x="5" y="3" width="5" height="18" rx="1" />';
+
+// Reflect play/pause state on the toggle button: swap the Lucide icon + label.
 function updateControls() {
   const playBtn = $.select('#playPause');
-  if (playBtn && viz) {
-    playBtn.textContent = viz.playing ? '⏸ Pause' : '▶ Play';
-  }
+  if (!playBtn || !viz) return;
+  const playing = viz.playing;
+  const svg = playBtn.querySelector('.ico');
+  if (svg) svg.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+  const label = playBtn.querySelector('.btn-label');
+  if (label) label.textContent = playing ? 'Pause' : 'Play';
+  playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
 }
 
 // ---------------------------------------------------------------------------
@@ -614,6 +624,17 @@ function graphSignature() {
   return srcPart + '#' + nodes.length + '#' + edgePart;
 }
 
+// Repaint the canvas in a way that respects an active visualization. Used by
+// recurring repaints (e.g. fsm.js's blinking-caret timer) so they don't clobber
+// the visualizer's colored render with the plain black graph.
+function repaintCanvas() {
+  if (viz) {
+    viz.render();
+  } else {
+    draw();
+  }
+}
+
 function runVisualization() {
   const g = new Graph();
 
@@ -627,7 +648,10 @@ function runVisualization() {
   g.computeShortestPath();
   viz = new Visualizer(g);
   viz.signature = graphSignature();
-  viz.reset();
+  // Land on the final frame so "Run Dijkstra" immediately shows the result
+  // (shortest-path tree + distances). Use the playback controls — Reset then
+  // Play/step — to watch the algorithm build up step by step.
+  viz.runToEnd();
   updateControls();
 }
 
@@ -659,9 +683,9 @@ function selectPathTarget(target) {
 function vertexAtCanvasPoint(clientX, clientY) {
   const cv = $.select('#canvas');
   const rect = cv.getBoundingClientRect();
-  const scale = cv.width / (window.devicePixelRatio || 1) / rect.width;
-  const x = (clientX - rect.left) * scale;
-  const y = (clientY - rect.top) * scale;
+  // Map the click from rendered CSS pixels into the fixed logical draw space.
+  const x = (clientX - rect.left) * (LOGICAL_W / rect.width);
+  const y = (clientY - rect.top) * (LOGICAL_H / rect.height);
   for (const node of nodes) {
     const dx = x - node.x;
     const dy = y - node.y;
@@ -670,6 +694,194 @@ function vertexAtCanvasPoint(clientX, clientY) {
     }
   }
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// Text-based graph editor: add/remove vertices and edges by name, so the graph
+// can be built without canvas mouse gestures (mobile + accessibility).
+// ---------------------------------------------------------------------------
+
+// Set or clear an inline validation message. Returns false for convenience so
+// callers can `return editorError(...)`.
+function editorError(selector, msg) {
+  const el = $.select(selector);
+  if (el) el.textContent = msg;
+  return false;
+}
+function clearEditorError(selector) {
+  const el = $.select(selector);
+  if (el) el.textContent = '';
+}
+
+function findNodeByLabel(label) {
+  const t = label.trim();
+  return nodes.find((n) => n.text === t);
+}
+
+// Pick a position for a newly added vertex. Positions are otherwise manual, so
+// we lay new nodes out on a circle using the golden angle (phyllotaxis), which
+// spreads successive nodes evenly without clustering. Falls back to shrinking
+// the radius (and finally a tiny jitter) if the slot collides with an existing
+// node, and clamps inside the logical draw space so it's always visible.
+function placeNewNode() {
+  const cx = LOGICAL_W / 2;
+  const cy = LOGICAL_H / 2;
+  const margin = nodeRadius + 10;
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const theta = -Math.PI / 2 + nodes.length * goldenAngle;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const collides = (x, y) =>
+    nodes.some((n) => {
+      const dx = x - n.x;
+      const dy = y - n.y;
+      return dx * dx + dy * dy < (2 * nodeRadius + 8) ** 2;
+    });
+
+  let R = Math.min(LOGICAL_W, LOGICAL_H) / 2 - nodeRadius - 20;
+  for (let i = 0; i < 6; i++) {
+    const x = clamp(cx + R * Math.cos(theta), margin, LOGICAL_W - margin);
+    const y = clamp(cy + R * Math.sin(theta), margin, LOGICAL_H - margin);
+    if (!collides(x, y) || R <= nodeRadius) {
+      return { x, y };
+    }
+    R -= nodeRadius;
+  }
+  // Last resort: small deterministic jitter around center by node index.
+  const j = nodes.length * 17;
+  return {
+    x: clamp(cx + (j % 120) - 60, margin, LOGICAL_W - margin),
+    y: clamp(cy + ((j * 7) % 120) - 60, margin, LOGICAL_H - margin),
+  };
+}
+
+// Create a vertex with the given label, auto-placed. The first vertex added to
+// an empty graph becomes the source so the graph is immediately runnable.
+function createNode(label) {
+  const pos = placeNewNode();
+  const node = new Node(pos.x, pos.y);
+  node.text = label.trim();
+  if (nodes.length === 0) node.isSourceNode = true;
+  nodes.push(node);
+  return node;
+}
+
+// Persist + invalidate after any editor mutation (mirrors the clear/preset
+// handlers): draw() saves to localStorage, resetVisualizer() discards the stale
+// trace so ensureFresh() recomputes on the next run/play.
+function commitGraphChange() {
+  draw();
+  resetVisualizer();
+}
+
+function addVertexFromInput() {
+  const input = $.select('#vertexLabel');
+  const label = input.value.trim();
+  if (!label) return editorError('#vertexError', 'Enter a vertex label.');
+  if (findNodeByLabel(label)) {
+    return editorError('#vertexError', `Vertex "${label}" already exists.`);
+  }
+  createNode(label);
+  input.value = '';
+  clearEditorError('#vertexError');
+  commitGraphChange();
+}
+
+function removeVertexFromInput() {
+  const input = $.select('#vertexLabel');
+  const label = input.value.trim();
+  const node = findNodeByLabel(label);
+  if (!node)
+    return editorError('#vertexError', `No vertex "${label}" to remove.`);
+
+  const wasSource = node.isSourceNode;
+  // Remove the node and every link touching it (mirror fsm.js delete-key logic).
+  const ni = nodes.indexOf(node);
+  if (ni !== -1) nodes.splice(ni, 1);
+  for (let i = links.length - 1; i >= 0; i--) {
+    const l = links[i];
+    if (l.nodeA === node || l.nodeB === node || l.node === node) {
+      links.splice(i, 1);
+    }
+  }
+  // Keep a source if any vertices remain.
+  if (wasSource && nodes.length > 0 && !nodes.some((n) => n.isSourceNode)) {
+    nodes[0].isSourceNode = true;
+  }
+  input.value = '';
+  clearEditorError('#vertexError');
+  commitGraphChange();
+}
+
+function setSourceFromInput() {
+  const label = $.select('#vertexLabel').value.trim();
+  const node = findNodeByLabel(label);
+  if (!node) return editorError('#vertexError', `No vertex "${label}" found.`);
+  nodes.forEach((n) => (n.isSourceNode = false));
+  node.isSourceNode = true;
+  clearEditorError('#vertexError');
+  commitGraphChange();
+}
+
+// Find an existing directed edge src -> dest (only plain Links, not self/start).
+function findEdge(src, dest) {
+  return links.find(
+    (l) => l instanceof Link && l.nodeA === src && l.nodeB === dest
+  );
+}
+
+function addEdgeFromInput() {
+  const srcInput = $.select('#edgeSrc');
+  const destInput = $.select('#edgeDest');
+  const weightInput = $.select('#edgeWeight');
+  const src = srcInput.value.trim();
+  const dest = destInput.value.trim();
+  const rawWeight = weightInput.value.trim();
+
+  if (!src || !dest) {
+    return editorError('#edgeError', 'Enter both a source and destination.');
+  }
+  if (src === dest) {
+    return editorError('#edgeError', 'Source and destination must differ.');
+  }
+  const weight = Number(rawWeight);
+  if (rawWeight === '' || Number.isNaN(weight)) {
+    return editorError('#edgeError', 'Weight must be a number.');
+  }
+
+  // Find or create both endpoints (src first so placement sees the new count).
+  const a = findNodeByLabel(src) || createNode(src);
+  const b = findNodeByLabel(dest) || createNode(dest);
+
+  const existing = findEdge(a, b);
+  if (existing) {
+    existing.text = String(weight); // update weight in place
+  } else {
+    const link = new Link(a, b);
+    link.text = String(weight);
+    links.push(link);
+  }
+
+  srcInput.value = '';
+  destInput.value = '';
+  weightInput.value = '';
+  clearEditorError('#edgeError');
+  commitGraphChange();
+}
+
+function removeEdgeFromInput() {
+  const src = $.select('#edgeSrc').value.trim();
+  const dest = $.select('#edgeDest').value.trim();
+  const a = findNodeByLabel(src);
+  const b = findNodeByLabel(dest);
+  const edge = a && b ? findEdge(a, b) : null;
+  if (!edge) {
+    return editorError('#edgeError', `No edge ${src} → ${dest} to remove.`);
+  }
+  links.splice(links.indexOf(edge), 1);
+  $.select('#edgeSrc').value = '';
+  $.select('#edgeDest').value = '';
+  clearEditorError('#edgeError');
+  commitGraphChange();
 }
 
 function init() {
@@ -715,6 +927,20 @@ function init() {
   $.on('#exportPNG', 'click', () => saveAsPNG());
   $.on('#exportSVG', 'click', () => saveAsSVG());
   $.on('#exportLaTeX', 'click', () => saveAsLaTeX());
+
+  // Graph editor — add/remove vertices and edges by name.
+  $.on('#addVertex', 'click', addVertexFromInput);
+  $.on('#removeVertex', 'click', removeVertexFromInput);
+  $.on('#setSource', 'click', setSourceFromInput);
+  $.on('#addEdge', 'click', addEdgeFromInput);
+  $.on('#removeEdge', 'click', removeEdgeFromInput);
+  // Enter-to-submit on the label and weight fields.
+  $.on('#vertexLabel', 'keydown', (e) => {
+    if (e.key === 'Enter') addVertexFromInput();
+  });
+  $.on('#edgeWeight', 'keydown', (e) => {
+    if (e.key === 'Enter') addEdgeFromInput();
+  });
 
   $.on('#speed', 'input', (e) => {
     // Slider is 1 (slow) .. 10 (fast); map to milliseconds per step.
