@@ -4,6 +4,8 @@ An interactive, step-by-step visualizer for Dijkstra's shortest-path algorithm.
 Draw a directed, weighted graph on the canvas, then watch the algorithm settle
 each vertex, relax each edge, and light up the shortest-path tree in real time.
 
+**[Live demo](https://qubbit.github.io/dijkstra)**
+
 ![Screenshot of the Dijkstra visualizer](demo.png)
 
 ## Features
